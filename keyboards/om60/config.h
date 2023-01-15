@@ -63,6 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define RGBLIGHT_SLEEP
 #endif
 
+// RGBLIGHT_EFFECT_* (1702 bytes)
 #define RGBLIGHT_EFFECT_BREATHING
 #define RGBLIGHT_EFFECT_RAINBOW_MOOD
 #define RGBLIGHT_EFFECT_RAINBOW_SWIRL
@@ -98,7 +99,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define USB_MAX_POWER_CONSUMPTION 100
 #endif
 
-#define TAP_CODE_DELAY 10
-
 #define ENCODERS_PAD_A { B4 }
 #define ENCODERS_PAD_B { B5 }
+
+// Enable Minesweeper Mode (5108 bytes)
+#define MINESWEEPER_ENABLE

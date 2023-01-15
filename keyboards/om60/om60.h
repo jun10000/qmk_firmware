@@ -1,6 +1,6 @@
 /*
 Copyright 2021 Salicylic_Acid
-Copyright 2022 jun10000
+Copyright 2022-2023 jun10000
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "quantum.h"
+#include "extra/utility.h"
+#include "extra/minesweeper.h"
+
+
 
 #define LAYOUT( \
     L01, L05, L10, L15, L20, L25, L30, L35, L40, R45, R50, R55, R60, R65, \
@@ -39,3 +43,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     {   R44,   R49,   R54,   R59,   R64,   R69, KC_NO, KC_NO }, \
     {   R45,   R50,   R55,   R60,   R65, KC_NO, KC_NO, KC_NO }  \
   }
+
+
+
+typedef enum {
+      CK_MDMS = USER00,
+} CustomKeycodes;
+
+typedef enum {
+      OM_NORMAL,
+      OM_MINESWEEPER,
+} OperationModes;
+
+
+
+Position GetReadablePosition(keypos_t pos);
+
+void keyboard_post_init_user(void);
+bool process_record_user(uint16_t keycode, keyrecord_t *record);
