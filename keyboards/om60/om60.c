@@ -44,11 +44,13 @@ Position GetReadablePosition(keypos_t pos) {
 }
 
 void keyboard_post_init_user(void) {
+#ifdef CONSOLE_ENABLE
       // Customise these values to desired behaviour
       debug_enable=true;
       // debug_matrix=true;
       debug_keyboard=true;
       debug_mouse=true;
+#endif
 }
 
 static OperationModes operation_mode = OM_NORMAL;
