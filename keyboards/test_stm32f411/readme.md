@@ -25,3 +25,22 @@ Enter the bootloader in 3 ways:
 * **Bootmagic reset**: Hold down the key at (0,0) in the matrix (usually the top left key or Escape) and plug in the keyboard
 * **Physical reset button**: Briefly press the button on the back of the PCB - some may have pads you must short instead
 * **Keycode in layout**: Press the key mapped to `QK_BOOT` if it is available
+
+## Boot config
+
+QMK Firmware uses DFU boot.  
+Please connect BOOT0 to VDD, and PB2 (BOOT1) to GND.
+
+## Interface test
+
+### Wire connection - Common stm32f411
+
+PC2 - Button (KC_1) - GND  
+PC3 - Button (KC_2) - GND
+
+### Wire connection - I2C
+
+|Pin|stm32f411 (I2C3, AF04)|esp32-s3|Note|
+|---|----------------------|--------|----|
+|SDA|PC9|4|with 4.7kΩ pull-up|
+|SCL|PA8|5|with 4.7kΩ pull-up|
