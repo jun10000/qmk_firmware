@@ -20,8 +20,10 @@
 //#define NO_ACTION_ONESHOT
 
 // Interface method switcher
-// IFM_I2C: I2C
-#define IF_METHOD IFM_I2C
+// Make sure to rewrite rules.mk too
+#define IFM_I2C     0           // I2C
+#define IFM_SPI     1           // SPI
+#define IF_METHOD   IFM_SPI
 
 #if IF_METHOD == IFM_I2C
     #define I2C_DRIVER          I2CD3
@@ -33,7 +35,21 @@
     #define I2C1_CLOCK_SPEED    100000
     #define I2C1_DUTY_CYCLE     STD_DUTY_CYCLE
 
-    #define I2C3_ESP32_ADDR     (0x55 << 1)
-    #define I2C3_ESP32_TIMEOUT  200
-    #define I2C3_ESP32_SENDLEN  128
+    #define I2C_ADDRESS         (0x55 << 1)
+    #define I2C_TIMEOUT         200
+    #define I2C_DATA_LENGTH     128
+#elif IF_METHOD == IFM_SPI
+    #define SPI_DRIVER          SPID2
+    #define SPI_SCK_PIN         B13
+    #define SPI_SCK_PAL_MODE    5
+    #define SPI_MOSI_PIN        B15
+    #define SPI_MOSI_PAL_MODE   5
+    #define SPI_MISO_PIN        B14
+    #define SPI_MISO_PAL_MODE   5
+
+    #define SPI_SS_PIN          B12
+    #define SPI_LSBFIRST        FALSE
+    #define SPI_MODE            0
+    #define SPI_CLOCK_DIV       1       // SPI1, 4, 5: max 50MHz, SPI2, 3: max 25MHz
+    #define SPI_DATA_LENGTH     5
 #endif
