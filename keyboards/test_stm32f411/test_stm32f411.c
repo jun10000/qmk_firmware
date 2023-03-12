@@ -31,15 +31,19 @@ void keyboard_post_init_user(void) {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #if IF_METHOD == IFM_I2C
     uint8_t data[I2C_DATA_LENGTH] = {0};
-#elif IF_METHOD == IFM_SPI
-    uint8_t data[SPI_DATA_LENGTH];
-#endif
-
     data[0] = 0xFF;
     data[1] = HighByte(keycode);
     data[2] = LowByte(keycode);
     data[3] = record->event.pressed;
     data[4] = Checksum(data + 1, 3);
+#elif IF_METHOD == IFM_SPI
+    uint8_t data[SPI_DATA_LENGTH];
+    data[0] = HighByte(keycode);
+    data[1] = LowByte(keycode);
+    data[2] = record->event.pressed;
+    data[3] = Checksum(data + 0, 3);
+#endif
+
 
     // UART
     // uart_transmit(data,5);
