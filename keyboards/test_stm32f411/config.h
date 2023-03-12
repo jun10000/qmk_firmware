@@ -48,8 +48,8 @@
     #define SPI_MISO_PAL_MODE   5
 
     #define SPI_SS_PIN          B12
-    #define SPI_LSBFIRST        FALSE
-    #define SPI_MODE            0
-    #define SPI_CLOCK_DIV       1       // SPI1, 4, 5: max 50MHz, SPI2, 3: max 25MHz
+    #define SPI_MODE            0       // CPOL * 2 + CPHA
+    #define SPI_CLOCK_DIV       2       // Max frequency: 50MHz (SPI1, 4, 5), 25MHz (SPI2, 3)
+                                        // Available value: 2 - 256
     #define SPI_DATA_LENGTH     5
 #endif

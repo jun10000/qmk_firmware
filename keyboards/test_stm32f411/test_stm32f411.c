@@ -53,7 +53,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         i2c_stop();
     }
 #elif IF_METHOD == IFM_SPI
-    if (spi_start(SPI_SS_PIN, SPI_LSBFIRST, SPI_MODE, SPI_CLOCK_DIV)) {
+    if (spi_start(SPI_SS_PIN, false, SPI_MODE, SPI_CLOCK_DIV)) {
         spi_transmit(data, SPI_DATA_LENGTH);
         spi_stop();
     }

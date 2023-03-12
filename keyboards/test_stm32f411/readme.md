@@ -40,7 +40,26 @@ PC3 - Button (KC_2) - GND
 
 ### Wire connection - I2C
 
-|Pin|stm32f411 (I2C3, AF04)|esp32-s3|Note|
-|---|----------------------|--------|----|
-|SDA|PC9|4|with 4.7kΩ pull-up|
-|SCL|PA8|5|with 4.7kΩ pull-up|
+|  Pin|  stm32f411|  esp32-s3|
+|-----|-----------|----------|
+|  SDA|        PC9|         4|
+|  SCL|        PA8|         5|
+
+#### Note
+
+stm32f411 uses I2C3, AF04.  
+4.7 kΩ pull-up resistors are connected to SDA and SCL pins.  
+
+### Wire connection - SPI
+
+|   Pin|  stm32f411|  esp32-s3|
+|------|-----------|----------|
+|    CS|       PB12|        10|
+|  SCLK|       PB13|        12|
+|  MOSI|       PB15|        11|
+|  MISO|       PB14|        13|
+
+#### Note
+
+stm32f411 uses SPI2, AF05.  
+esp32-s3 uses SPI2 (FSPI).  
