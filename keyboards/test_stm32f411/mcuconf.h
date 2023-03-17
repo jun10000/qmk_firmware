@@ -8,4 +8,7 @@
 #elif IF_METHOD == IFM_SPI
     #undef STM32_SPI_USE_SPI2
     #define STM32_SPI_USE_SPI2 TRUE
+#elif IF_METHOD == IFM_UART
+    #undef STM32_SERIAL_USE_USART2
+    #define STM32_SERIAL_USE_USART2 TRUE
 #endif

@@ -23,7 +23,8 @@
 // Make sure to rewrite rules.mk too
 #define IFM_I2C     0           // I2C
 #define IFM_SPI     1           // SPI
-#define IF_METHOD   IFM_SPI
+#define IFM_UART    2           // UART
+#define IF_METHOD   IFM_UART
 
 #if IF_METHOD == IFM_I2C
     #define I2C_DRIVER          I2CD3
@@ -52,4 +53,24 @@
     #define SPI_CLOCK_DIV       2       // Max frequency: 50MHz (SPI1, 4, 5), 25MHz (SPI2, 3)
                                         // Available value: 2 - 256
     #define SPI_DATA_LENGTH     4
+#elif IF_METHOD == IFM_UART
+    // #define SERIAL_USART_DRIVER         SD2
+    // #define SERIAL_USART_TX_PIN         A2
+    // #define SERIAL_USART_TX_PAL_MODE    7
+    // #define SERIAL_USART_RX_PIN         A3
+    // #define SERIAL_USART_RX_PAL_MODE    7
+    // #define SERIAL_USART_FULL_DUPLEX
+    // #define SELECT_SOFT_SERIAL_SPEED    2       // Half-duplex and Full-duplex baudrate:
+    //                                             // 0 = 460800, 1 = 230400, 2 = 115200
+    //                                             // 3 = 57600, 4 = 38400, 5 = 19200
+    // #define SERIAL_USART_TIMEOUT        20
+
+    #define SERIAL_DRIVER       SD2
+    #define SD1_TX_PIN          A2
+    #define SD1_TX_PAL_MODE     7
+    #define SD1_RX_PIN          A3
+    #define SD1_RX_PAL_MODE     7
+
+    #define UART_BAUDRATE       115200
+    #define UART_DATA_LENGTH    3
 #endif

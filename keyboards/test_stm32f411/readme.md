@@ -45,8 +45,6 @@ PC3 - Button (KC_2) - GND
 |  SDA|        PC9|         4|
 |  SCL|        PA8|         5|
 
-#### Note
-
 stm32f411 uses I2C3, AF04.  
 4.7 kΩ pull-up resistors are connected to SDA and SCL pins.  
 
@@ -59,7 +57,18 @@ stm32f411 uses I2C3, AF04.
 |  MOSI|       PB15|        11|
 |  MISO|       PB14|        13|
 
-#### Note
-
 stm32f411 uses SPI2, AF05.  
 esp32-s3 uses SPI2 (FSPI).  
+
+### Wire connection - UART
+
+|  Pin|  stm32f411|  esp32-s3|
+|-----|-----------|----------|
+|   TX|        PA2|        17|
+|   RX|        PA3|        18|
+|  CTS|          -|         -|
+|  RTS|          -|         -|
+
+Connect TX and RX pins each other.  
+stm32f411 uses USART2, AF07.  
+esp32-s3 uses U1.  
