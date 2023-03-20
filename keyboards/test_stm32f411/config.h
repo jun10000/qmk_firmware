@@ -72,5 +72,5 @@
     #define SD1_RX_PAL_MODE     7
 
     #define UART_BAUDRATE       115200
-    #define UART_DATA_LENGTH    3
+    #define UART_DATA_LENGTH    4
 #endif

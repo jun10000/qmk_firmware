@@ -8,7 +8,7 @@
 #define I2C_PIN_SDA         4
 #define I2C_PIN_SCL         5
 #define I2C_ADDRESS         0x55
-#define I2C_WAITTICK        200
+#define I2C_WAIT_TICK       200
 #define I2C_BUF_LENGTH      128
 #define I2C_DATA_LENGTH     5
 
@@ -37,7 +37,7 @@ void i2c_task_receive_data(void *param) {
     int i;
 
     while (true) {
-        length = i2c_slave_read_buffer(I2C_PORT, data, I2C_BUF_LENGTH, I2C_WAITTICK);
+        length = i2c_slave_read_buffer(I2C_PORT, data, I2C_BUF_LENGTH, I2C_WAIT_TICK);
         ESP_ERROR_CHECK(length < 0);
         if (length == 0) {
             continue;

@@ -58,6 +58,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     data[0] = HighByte(keycode);
     data[1] = LowByte(keycode);
     data[2] = record->event.pressed;
+    data[3] = Checksum(data + 0, 3);
 
     uart_transmit(data, UART_DATA_LENGTH);
 #endif
