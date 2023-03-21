@@ -1,7 +1,12 @@
 #include "quantum.h"
-#include "i2c_master.h"
-#include "spi_master.h"
-#include "uart.h"
+
+#if IF_METHOD == IFM_I2C
+    #include "i2c_master.h"
+#elif IF_METHOD == IFM_SPI
+    #include "spi_master.h"
+#elif IF_METHOD == IFM_UART
+    #include "uart.h"
+#endif
 
 uint8_t LowByte(uint16_t u16) {
     return (uint8_t)u16;

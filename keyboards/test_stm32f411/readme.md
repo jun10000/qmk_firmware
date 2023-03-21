@@ -64,11 +64,11 @@ esp32-s3 uses SPI2 (FSPI).
 
 |  Pin|  stm32f411|  esp32-s3|
 |-----|-----------|----------|
-|   TX|        PA2|        17|
-|   RX|        PA3|        18|
+|   TX|        PB6|        17|
+|   RX|        PB7|        18|
 |  CTS|          -|         -|
 |  RTS|          -|         -|
 
 Connect TX and RX pins each other.  
-stm32f411 uses USART2, AF07.  
+stm32f411 uses USART1, AF07.  
 esp32-s3 uses U1.  
