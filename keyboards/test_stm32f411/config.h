@@ -24,7 +24,7 @@
 #define IFM_I2C     0           // I2C
 #define IFM_SPI     1           // SPI
 #define IFM_UART    2           // UART
-#define IF_METHOD   IFM_UART
+#define IF_METHOD   IFM_I2C
 
 #if IF_METHOD == IFM_I2C
     #define I2C_DRIVER          I2CD3
@@ -37,8 +37,8 @@
     #define I2C1_DUTY_CYCLE     STD_DUTY_CYCLE
 
     #define I2C_ADDRESS         (0x55 << 1)
-    #define I2C_TIMEOUT         200
-    #define I2C_DATA_LENGTH     128
+    #define I2C_TIMEOUT_MS      100
+    #define I2C_DATA_LENGTH     28              // The approximate size of the esp32-s3 RX buffer (Bothersome...)
 #elif IF_METHOD == IFM_SPI
     #define SPI_DRIVER          SPID2
     #define SPI_SCK_PIN         B13

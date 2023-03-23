@@ -4,7 +4,7 @@
 #define IFM_I2C             0           // I2C
 #define IFM_SPI             1           // SPI
 #define IFM_UART            2           // UART
-#define IF_METHOD           IFM_UART
+#define IF_METHOD           IFM_I2C
 
 #if IF_METHOD == IFM_I2C
     #include "main_i2c.h"

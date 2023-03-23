@@ -5,11 +5,13 @@
 #include "utility.h"
 
 #define I2C_PORT            I2C_NUM_0
-#define I2C_PIN_SDA         4
-#define I2C_PIN_SCL         5
+#define I2C_PIN_SCL         0
+#define I2C_PIN_SDA         1
 #define I2C_ADDRESS         0x55
-#define I2C_WAIT_TICK       200
+#define I2C_CLOCK_SPEED     100000
+#define I2C_WAIT_TICK       10          // Bothersome...
 #define I2C_BUF_LENGTH      128
+#define I2C_TRANS_LENGTH    28          // Bothersome...
 #define I2C_DATA_LENGTH     5
 
 static const char *I2C_TAG = "ble-keyboard-i2c";
@@ -19,12 +21,12 @@ void i2c_start(void) {
         .mode = I2C_MODE_SLAVE,
         .sda_io_num = I2C_PIN_SDA,
         .scl_io_num = I2C_PIN_SCL,
-        .sda_pullup_en = GPIO_PULLUP_ENABLE,
-        .scl_pullup_en = GPIO_PULLUP_ENABLE,
+        .sda_pullup_en = false,
+        .scl_pullup_en = false,
         .slave.addr_10bit_en = 0,
         .slave.slave_addr = I2C_ADDRESS,
-        .slave.maximum_speed = 0,
-        .clk_flags = 0,
+        .slave.maximum_speed = I2C_CLOCK_SPEED,
+        .clk_flags = I2C_SCLK_SRC_FLAG_FOR_NOMAL,
     };
 
     ESP_ERROR_CHECK(i2c_param_config(I2C_PORT, &conf));
@@ -33,22 +35,19 @@ void i2c_start(void) {
 
 void i2c_task_receive_data(void *param) {
     uint8_t data[I2C_BUF_LENGTH];
-    int length;
-    int i;
 
     while (true) {
-        length = i2c_slave_read_buffer(I2C_PORT, data, I2C_BUF_LENGTH, I2C_WAIT_TICK);
-        ESP_ERROR_CHECK(length < 0);
-        if (length == 0) {
+        int len = i2c_slave_read_buffer(I2C_PORT, data, I2C_BUF_LENGTH, I2C_WAIT_TICK);
+        ESP_ERROR_CHECK(len < 0);
+
+        if (len == 0) {
             continue;
         }
 
-        for (i = 0; i < length - I2C_DATA_LENGTH; i++) {
+        for (int i = 0; i < len - I2C_DATA_LENGTH; i++) {
             if (data[i] != 0xFF) {
                 continue;
-            }
-
-            if (get_checksum(&data[i + 1], I2C_DATA_LENGTH - 2) != data[i + I2C_DATA_LENGTH - 1]) {
+            } else if (get_checksum(&data[i + 1], I2C_DATA_LENGTH - 2) != data[i + I2C_DATA_LENGTH - 1]) {
                 ESP_LOGE(I2C_TAG, "Received data are wrong");
                 continue;
             }
@@ -57,9 +56,7 @@ void i2c_task_receive_data(void *param) {
             ESP_LOGI(I2C_TAG, "    High byte of keycode: 0x%02X", data[i + 1]);
             ESP_LOGI(I2C_TAG, "    Low byte of keycode: 0x%02X", data[i + 2]);
             ESP_LOGI(I2C_TAG, "    Key pressed: %s", data[i + 3] ? "yes" : "no");
+            i += I2C_TRANS_LENGTH - 1;
         }
-
-        i2c_reset_rx_fifo(I2C_PORT);
-        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

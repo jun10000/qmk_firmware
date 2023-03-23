@@ -42,8 +42,8 @@ PC3 - Button (KC_2) - GND
 
 |  Pin|  stm32f411|  esp32-s3|
 |-----|-----------|----------|
-|  SDA|        PC9|         4|
-|  SCL|        PA8|         5|
+|  SCL|        PA8|         0|
+|  SDA|        PC9|         1|
 
 stm32f411 uses I2C3, AF04.  
 4.7 kΩ pull-up resistors are connected to SDA and SCL pins.  
