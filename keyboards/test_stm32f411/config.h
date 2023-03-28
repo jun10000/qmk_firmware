@@ -21,10 +21,10 @@
 
 // Interface method switcher
 // Make sure to rewrite rules.mk too
-#define IFM_I2C     0           // I2C
-#define IFM_SPI     1           // SPI
-#define IFM_UART    2           // UART
-#define IF_METHOD   IFM_I2C
+#define IFM_I2C         0           // I2C
+#define IFM_SPI         1           // SPI
+#define IFM_UART        2           // UART
+#define IF_METHOD       IFM_UART
 
 #if IF_METHOD == IFM_I2C
     #define I2C_DRIVER          I2CD3
