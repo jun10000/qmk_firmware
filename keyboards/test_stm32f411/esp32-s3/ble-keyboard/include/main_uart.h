@@ -12,7 +12,8 @@
 #define UART_DATA_LENGTH    4
 #define UART_BUF_LENGTH     256
 #define UART_QUEUE_SIZE     10
-#define UART_WAIT_TICK      100
+#define UART_READWAIT_TICK  100
+#define UART_LOOPWAIT_MS    10
 
 static const char *UART_TAG = "ble-keyboard-uart";
 
@@ -43,11 +44,11 @@ void uart_task_receive_data(void *param) {
         memset(data, 0, UART_DATA_LENGTH);
 
         ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT, (size_t *)&len));
-        len = uart_read_bytes(UART_PORT, data, len, UART_WAIT_TICK);
+        len = uart_read_bytes(UART_PORT, data, len, UART_READWAIT_TICK);
         ESP_ERROR_CHECK(len == -1);
 
         if (len == 0) {
-            vTaskDelay(pdMS_TO_TICKS(10));
+            vTaskDelay(pdMS_TO_TICKS(UART_LOOPWAIT_MS));
             continue;
         } else if (len != UART_DATA_LENGTH) {
             ESP_LOGE(UART_TAG, "Received data length is invalid");

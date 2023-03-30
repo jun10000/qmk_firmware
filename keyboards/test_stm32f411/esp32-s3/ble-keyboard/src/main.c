@@ -16,7 +16,7 @@
 
 #define TASK_STACK_SIZE     (4 * 1024)
 #define TASK_PRIORITY       17
-#define MAIN_WAITTICK       100
+#define MAIN_WAIT_TICK      100
 
 static const char *TAG = "ble-keyboard";
 
@@ -31,6 +31,7 @@ void app_main(void)
 #elif IF_METHOD == IFM_UART
     uart_start();
 #endif
+    usb_start();
     ESP_LOGI(TAG, "Initialize finished");
 
     TaskHandle_t task;
@@ -45,6 +46,6 @@ void app_main(void)
     ESP_LOGI(TAG, "Task created");
 
     while (true) {
-        vTaskDelay(MAIN_WAITTICK);
+        vTaskDelay(MAIN_WAIT_TICK);
     }
 }
