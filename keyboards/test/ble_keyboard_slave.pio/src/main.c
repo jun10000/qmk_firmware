@@ -1,4 +1,5 @@
 #include "esp_log.h"
+#include "main_usb.h"
 
 // Interface method switcher
 #define IFM_I2C             0           // I2C

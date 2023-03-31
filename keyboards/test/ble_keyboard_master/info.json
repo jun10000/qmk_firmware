@@ -1,6 +1,6 @@
 {
     "manufacturer": "jun10000",
-    "keyboard_name": "test_stm32f411",
+    "keyboard_name": "ble_keyboard_master",
     "maintainer": "jun10000",
     "bootloader": "stm32-dfu",
     "diode_direction": "COL2ROW",
