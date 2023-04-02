@@ -2,5 +2,10 @@
     "C_Cpp.intelliSenseEngine": "Tag Parser",
     "idf.adapterTargetName": "esp32s3",
     "idf.portWin": "COM9",
-    "idf.flashType": "UART"
+    "idf.flashType": "UART",
+    "files.associations": {
+        "random": "cpp",
+        "freertos.h": "c",
+        "queue.h": "c"
+    }
 }

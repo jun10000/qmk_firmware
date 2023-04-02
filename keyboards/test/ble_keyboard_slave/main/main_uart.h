@@ -36,6 +36,7 @@ void uart_start(void) {
 }
 
 void uart_task_receive_data(void *param) {
+    task_data_t *task_data = param;
     int len;
     uint8_t data[UART_DATA_LENGTH];
 
@@ -53,14 +54,19 @@ void uart_task_receive_data(void *param) {
         } else if (len != UART_DATA_LENGTH) {
             ESP_LOGE(UART_TAG, "Received data length is invalid");
             continue;
-        } else if (get_checksum(&data[0], UART_DATA_LENGTH - 1) != data[UART_DATA_LENGTH - 1]) {
+        } else if (get_checksum(data, UART_DATA_LENGTH - 1) != data[UART_DATA_LENGTH - 1]) {
             ESP_LOGE(UART_TAG, "Received data are wrong");
             continue;
         }
 
-        ESP_LOGI(UART_TAG, "Data received");
-        ESP_LOGI(UART_TAG, "    High byte of keycode: 0x%02X", data[0]);
-        ESP_LOGI(UART_TAG, "    Low byte of keycode: 0x%02X", data[1]);
-        ESP_LOGI(UART_TAG, "    Key pressed: %s", data[2] ? "yes" : "no");
+        queue_data_t qdata = {
+            .keycode_high = data[0],
+            .keycode_low = data[1],
+            .key_pressed = data[2],
+        };
+
+        if (xQueueSend(task_data->queue, &qdata, 0) != pdTRUE) {
+            ESP_LOGE(UART_TAG, "Send data to the queue failed");
+        }
     }
 }

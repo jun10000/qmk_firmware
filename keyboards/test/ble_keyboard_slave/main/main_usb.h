@@ -6,6 +6,7 @@
 #define USB_MAX_CURRENT         100
 #define USB_MAX_PACKET_LEN      16
 #define USB_POLLING_MS          10
+#define USB_LOOP_WAIT_MS        10
 
 // Each index and value of STRING_LIST elements
 #define USB_STRING_INDEX_LANGUAGE       0
@@ -41,6 +42,28 @@ static const uint8_t CONFIGURATION_DESCRIPTOR_ETC_LIST[] = {
 
 
 
+//
+// TinyUSB callback functions
+//
+
+uint8_t const * tud_hid_descriptor_report_cb(uint8_t instance) {
+    return REPORT_DESCRIPTOR_LIST;
+}
+
+uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen) {
+    return 0;
+}
+
+void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize) {
+    return;
+}
+
+
+
+//
+// User side functions
+//
+
 void usb_start(void) {
     const tinyusb_config_t conf = {
         .device_descriptor = NULL,
@@ -53,4 +76,32 @@ void usb_start(void) {
     };
 
     ESP_ERROR_CHECK(tinyusb_driver_install(&conf));
+}
+
+void usb_task_transmit_data(void *param) {
+    task_data_t *task_data = param;
+    queue_data_t data;
+
+    while (true) {
+        if (!tud_mounted() || uxQueueMessagesWaiting(task_data->queue) == 0) {
+            vTaskDelay(pdMS_TO_TICKS(USB_LOOP_WAIT_MS));
+            continue;
+        }
+
+        if (xQueueReceive(task_data->queue, &data, 0) != pdTRUE) {
+            ESP_LOGE(USB_TAG, "Receive data from the queue failed");
+            continue;
+        }
+
+        if (data.key_pressed) {
+            uint8_t send_keycodes[6] = { data.keycode_low };
+            if (!tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, send_keycodes)) {
+                ESP_LOGE(USB_TAG, "Send data to host failed");
+            }
+        } else {
+            if (!tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, NULL)) {
+                ESP_LOGE(USB_TAG, "Send data to host failed");
+            }
+        }
+    }
 }
