@@ -65,6 +65,7 @@ void uart_task_receive_data(void *param) {
             .key_pressed = data[2],
         };
 
+        print_input_data(UART_TAG, &qdata);
         if (xQueueSend(task_data->queue, &qdata, 0) != pdTRUE) {
             ESP_LOGE(UART_TAG, "Send data to the queue failed");
         }

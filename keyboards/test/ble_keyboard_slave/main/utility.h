@@ -8,3 +8,10 @@ uint8_t get_checksum(uint8_t *bytes, int length) {
 
     return sum;
 }
+
+void print_input_data(const char *TAG_NAME, queue_data_t *data) {
+    ESP_LOGI(TAG_NAME, "Data received");
+    ESP_LOGI(TAG_NAME, "    High byte of keycode: 0x%02X", data->keycode_high);
+    ESP_LOGI(TAG_NAME, "    Low byte of keycode: 0x%02X", data->keycode_low);
+    ESP_LOGI(TAG_NAME, "    Key pressed: %s", data->key_pressed ? "yes" : "no");
+}

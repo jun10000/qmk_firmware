@@ -45,6 +45,7 @@ void spi_start(void) {
 }
 
 void spi_task_receive_data(void *param) {
+    task_data_t *task_data = param;
     uint8_t data[SPI_DATA_LENGTH];
     spi_slave_transaction_t *trans_receive;
 
@@ -68,9 +69,15 @@ void spi_task_receive_data(void *param) {
             continue;
         }
 
-        ESP_LOGI(SPI_TAG, "Data received");
-        ESP_LOGI(SPI_TAG, "    High byte of keycode: 0x%02X", data[0]);
-        ESP_LOGI(SPI_TAG, "    Low byte of keycode: 0x%02X", data[1]);
-        ESP_LOGI(SPI_TAG, "    Key pressed: %s", data[2] ? "yes" : "no");
+        queue_data_t qdata = {
+            .keycode_high = data[0],
+            .keycode_low = data[1],
+            .key_pressed = data[2],
+        };
+
+        print_input_data(SPI_TAG, &qdata);
+        if (xQueueSend(task_data->queue, &qdata, 0) != pdTRUE) {
+            ESP_LOGE(SPI_TAG, "Send data to the queue failed");
+        }
     }
 }

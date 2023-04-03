@@ -34,6 +34,7 @@ void i2c_start(void) {
 }
 
 void i2c_task_receive_data(void *param) {
+    task_data_t *task_data = param;
     uint8_t data[I2C_BUF_LENGTH];
 
     while (true) {
@@ -52,10 +53,17 @@ void i2c_task_receive_data(void *param) {
                 continue;
             }
 
-            ESP_LOGI(I2C_TAG, "Data received [%d - %d]", i, i + I2C_DATA_LENGTH - 1);
-            ESP_LOGI(I2C_TAG, "    High byte of keycode: 0x%02X", data[i + 1]);
-            ESP_LOGI(I2C_TAG, "    Low byte of keycode: 0x%02X", data[i + 2]);
-            ESP_LOGI(I2C_TAG, "    Key pressed: %s", data[i + 3] ? "yes" : "no");
+            queue_data_t qdata = {
+                .keycode_high = data[i + 1],
+                .keycode_low = data[i + 2],
+                .key_pressed = data[i + 3],
+            };
+
+            print_input_data(I2C_TAG, &qdata);
+            if (xQueueSend(task_data->queue, &qdata, 0) != pdTRUE) {
+                ESP_LOGE(I2C_TAG, "Send data to the queue failed");
+            }
+
             i += I2C_TRANS_LENGTH - 1;
         }
     }

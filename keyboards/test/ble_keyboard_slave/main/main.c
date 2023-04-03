@@ -3,8 +3,8 @@
 #include "freertos/queue.h"
 
 // Interface method switcher
-#define IFM_I2C             0           // I2C (Not updated)
-#define IFM_SPI             1           // SPI (Not updated)
+#define IFM_I2C             0           // I2C
+#define IFM_SPI             1           // SPI
 #define IFM_UART            2           // UART
 #define IF_METHOD           IFM_UART
 
