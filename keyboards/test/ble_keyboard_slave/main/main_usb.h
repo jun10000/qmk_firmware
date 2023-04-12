@@ -43,24 +43,6 @@ static const uint8_t CONFIGURATION_DESCRIPTOR_ETC_LIST[] = {
 
 
 //
-// TinyUSB callback functions
-//
-
-uint8_t const * tud_hid_descriptor_report_cb(uint8_t instance) {
-    return REPORT_DESCRIPTOR_LIST;
-}
-
-uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen) {
-    return 0;
-}
-
-void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize) {
-    return;
-}
-
-
-
-//
 // User side functions
 //
 
@@ -103,5 +85,36 @@ void usb_task_transmit_data(void *param) {
                 ESP_LOGE(USB_TAG, "Send data to host failed");
             }
         }
+    }
+}
+
+void usb_receive_keyboard_data(uint8_t led_states) {
+    ESP_LOGI(USB_TAG, "Capslock is %s", (led_states & KEYBOARD_LED_CAPSLOCK) ? "enabled" : "disabled");
+}
+
+
+
+//
+// TinyUSB callback functions
+//
+
+uint8_t const * tud_hid_descriptor_report_cb(uint8_t instance) {
+    return REPORT_DESCRIPTOR_LIST;
+}
+
+uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen) {
+    return 0;
+}
+
+void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize) {
+    switch (report_id) {
+        case HID_ITF_PROTOCOL_KEYBOARD:
+            if (report_type == HID_REPORT_TYPE_OUTPUT && bufsize == 1) {
+                usb_receive_keyboard_data(buffer[0]);
+            }
+            break;
+        case HID_ITF_PROTOCOL_MOUSE:
+        default:
+            break;
     }
 }
