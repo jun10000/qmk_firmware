@@ -2,6 +2,7 @@
 
 #include "esp_log.h"
 #include "tinyusb.h"
+#include "utility_led.h"
 
 #define USB_MAX_CURRENT         100
 #define USB_MAX_PACKET_LEN      16
@@ -89,7 +90,13 @@ void usb_task_transmit_data(void *param) {
 }
 
 void usb_receive_keyboard_data(uint8_t led_states) {
-    ESP_LOGI(USB_TAG, "Capslock is %s", (led_states & KEYBOARD_LED_CAPSLOCK) ? "enabled" : "disabled");
+    if (led_states & KEYBOARD_LED_CAPSLOCK) {
+        led_enable();
+        ESP_LOGI(USB_TAG, "Capslock is enabled");
+    } else {
+        led_disable();
+        ESP_LOGI(USB_TAG, "Capslock is disabled");
+    }
 }
 
 
