@@ -10,6 +10,11 @@
         "array": "cpp",
         "string": "cpp",
         "string_view": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "syscfg.h": "c",
+        "ble_hs.h": "c",
+        "functional": "cpp",
+        "main_bl.h": "c",
+        "ble_sm.h": "c"
     }
 }
