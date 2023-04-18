@@ -16,6 +16,14 @@
         "functional": "cpp",
         "main_bl.h": "c",
         "ble_sm.h": "c",
-        "ble_uuid.h": "c"
+        "ble_uuid.h": "c",
+        "ble_gatt.h": "c",
+        "nimble_port.h": "c",
+        "nvs_flash.h": "c",
+        "esp_nimble_hci.h": "c",
+        "ble_hci_trans.h": "c",
+        "nimble_npl.h": "c",
+        "hci_common.h": "c",
+        "ble.h": "c"
     }
 }

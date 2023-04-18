@@ -5,9 +5,6 @@
 #include "esp_nimble_hci.h"
 #include "nimble/nimble_port.h"
 #include "host/ble_hs.h"
-#include "host/ble_sm.h"
-#include "host/ble_gatt.h"
-#include "host/ble_uuid.h"
 // #include "utility_led.h"
 
 #define BL_UUID_GATT_SERVICE_BATTERY                0x180F
@@ -49,36 +46,79 @@ static const struct ble_gatt_svc_def BL_SERVICES[] = {
     {0},
 };
 
+static uint8_t bl_address_type;
+
+
+
+//
+// User side functions 2
+//
+
+// to do
+void bl_advertise(void) {
+
+}
+
 
 
 //
 // ble_hs_cfg callback functions
 //
 
-// to do
 void ble_hs_cfg_gatts_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg) {
+    char tmp[BLE_UUID_STR_LEN];
 
+    switch (ctxt->op) {
+        case BLE_GATT_REGISTER_OP_SVC:
+            ESP_LOGI(BL_TAG, "Service %s (handle = %d) is registered",
+                ble_uuid_to_str(ctxt->svc_def->uuid, tmp),
+                ctxt->svc.handle);
+            break;
+        case BLE_GATT_REGISTER_OP_CHR:
+            ESP_LOGI(BL_TAG, "Characteristic %s (def_handle = %d, val_handle = %d) is registered",
+                ble_uuid_to_str(ctxt->chr.chr_def->uuid, tmp),
+                ctxt->chr.def_handle,
+                ctxt->chr.val_handle);
+            break;
+        case BLE_GATT_REGISTER_OP_DSC:
+            ESP_LOGI(BL_TAG, "Descriptor %s (handle = %d) is registered",
+                ble_uuid_to_str(ctxt->dsc.dsc_def->uuid, tmp),
+                ctxt->dsc.handle);
+            break;
+        default:
+            ESP_ERROR_CHECK(ESP_FAIL);
+            break;
+    }
 }
 
-// to do
 void ble_hs_cfg_reset_cb(int reason) {
-
+    ESP_LOGE(BL_TAG, "Resetting state, reason = %d", reason);
 }
 
-// to do
 void ble_hs_cfg_sync_cb(void) {
+    ESP_ERROR_CHECK(ble_hs_util_ensure_rand_addr());
 
-}
+    int result = ble_hs_id_infer_auto(1, &bl_address_type);
+    if (result != 0) {
+        ESP_LOGE(BL_TAG, "Determine address type failed, result = %d", result);
+        return;
+    }
 
-// to do
-int ble_hs_cfg_store_status_cb(struct ble_store_status_event *event, void *arg) {
+    uint8_t address[6] = {0};
+    result = ble_hs_id_copy_addr(bl_address_type, address, NULL);
+    if (result != 0) {
+        ESP_LOGE(BL_TAG, "Get address failed, result = %d", result);
+        return;
+    }
 
+    ESP_LOGI(BL_TAG, "Device address = "MACSTR, MAC2STR(address));
+    bl_advertise();
 }
 
 
 
 //
-// User side functions
+// User side functions 1
 //
 
 esp_err_t bl_initialize_nvs_flash(void) {
@@ -114,7 +154,7 @@ void bl_initialize_ble_hs_cfg(void) {
     // ble_hs_cfg.store_write_cb = NULL;
     // ble_hs_cfg.store_delete_cb = NULL;
 
-    ble_hs_cfg.store_status_cb = ble_hs_cfg_store_status_cb;
+    ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
     ble_hs_cfg.store_status_arg = NULL;
 }
 
