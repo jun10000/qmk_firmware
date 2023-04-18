@@ -15,6 +15,7 @@
         "ble_hs.h": "c",
         "functional": "cpp",
         "main_bl.h": "c",
-        "ble_sm.h": "c"
+        "ble_sm.h": "c",
+        "ble_uuid.h": "c"
     }
 }

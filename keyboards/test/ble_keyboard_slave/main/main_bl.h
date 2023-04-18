@@ -6,21 +6,47 @@
 #include "nimble/nimble_port.h"
 #include "host/ble_hs.h"
 #include "host/ble_sm.h"
+#include "host/ble_gatt.h"
+#include "host/ble_uuid.h"
 // #include "utility_led.h"
+
+#define BL_UUID_GATT_SERVICE_BATTERY                0x180F
+#define BL_UUID_GATT_SERVICE_DEVICE_INFORMATION     0x180A
+#define BL_UUID_GATT_SERVICE_HID                    0x1812
 
 static const char *BL_TAG = "ble-keyboard-bl";
 
 // to do
+static const struct ble_gatt_svc_def BL_SERVICE_BATTERY = {
+    .type = BLE_GATT_SVC_TYPE_PRIMARY,
+    .uuid = BLE_UUID16_DECLARE(BL_UUID_GATT_SERVICE_BATTERY),
+    .includes = NULL,
+    .characteristics = ???,
+};
+
+// to do
+static const struct ble_gatt_svc_def BL_SERVICE_DEVICE_INFORMATION = {
+    .type = BLE_GATT_SVC_TYPE_PRIMARY,
+    .uuid = BLE_UUID16_DECLARE(BL_UUID_GATT_SERVICE_DEVICE_INFORMATION),
+    .includes = NULL,
+    .characteristics = ???,
+};
+
+// to do
+static const struct ble_gatt_svc_def BL_SERVICE_HID = {
+    .type = BLE_GATT_SVC_TYPE_PRIMARY,
+    .uuid = BLE_UUID16_DECLARE(BL_UUID_GATT_SERVICE_HID),
+    .includes = {
+        &BL_SERVICE_BATTERY,
+        &BL_SERVICE_DEVICE_INFORMATION,
+        NULL,
+    },
+    .characteristics = ???,
+};
+
 static const struct ble_gatt_svc_def BL_SERVICES[] = {
-    {
-        .type = ???,
-        .uuid = ???,
-        .includes = NULL,
-        .characteristics = ???,
-    },
-    {
-        0,
-    },
+    BL_SERVICE_HID,
+    {0},
 };
 
 
