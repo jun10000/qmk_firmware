@@ -25,6 +25,12 @@
         "nimble_npl.h": "c",
         "hci_common.h": "c",
         "ble.h": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "chrono": "c",
+        "compare": "c",
+        "ratio": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c"
     }
 }

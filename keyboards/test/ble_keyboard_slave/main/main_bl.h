@@ -53,12 +53,185 @@ static uint8_t bl_address_type;
 
 
 //
+// User side functions 3
+//
+
+void bl_print_ble_gap_conn_desc(struct ble_gap_conn_desc *desc) {
+    ESP_LOGI(BL_TAG,
+        "(struct ble_gap_conn_desc) {\n"
+        "   .sec_state.encrypted = %d,\n"
+        "   .sec_state.authenticated = %d,\n"
+        "   .sec_state.bonded = %d,\n"
+        "   .sec_state.key_size = %d,\n"
+        "   .our_id_addr.type = %d,\n"
+        "   .our_id_addr.val = "MACSTR",\n"
+        "   .peer_id_addr.type = %d,\n"
+        "   .peer_id_addr.val = "MACSTR",\n"
+        "   .our_ota_addr.type = %d,\n"
+        "   .our_ota_addr.val = "MACSTR",\n"
+        "   .peer_ota_addr.type = %d,\n"
+        "   .peer_ota_addr.val = "MACSTR",\n"
+        "   .conn_handle = %d,\n"
+        "   .conn_itvl = %d,\n"
+        "   .conn_latency = %d,\n"
+        "   .supervision_timeout = %d,\n"
+        "   .role = %d,\n"
+        "   .master_clock_accuracy = %d,\n"
+        "}",
+        desc->sec_state.encrypted,
+        desc->sec_state.authenticated,
+        desc->sec_state.bonded,
+        desc->sec_state.key_size,
+        desc->our_id_addr.type,
+        MAC2STR(desc->our_id_addr.val),
+        desc->peer_id_addr.type,
+        MAC2STR(desc->peer_id_addr.val),
+        desc->our_ota_addr.type,
+        MAC2STR(desc->our_ota_addr.val),
+        desc->peer_ota_addr.type,
+        MAC2STR(desc->peer_ota_addr.val),
+        desc->conn_handle,
+        desc->conn_itvl,
+        desc->conn_latency,
+        desc->supervision_timeout,
+        desc->role,
+        desc->master_clock_accuracy);
+}
+
+void bl_start_advertising(void);
+
+// to do: think hid_clean_vars
+int bl_gap_event_connect(int status, uint16_t conn_handle) {
+    struct ble_gap_conn_desc desc;
+
+    if (status == 0) {
+        ESP_LOGI(BL_TAG, "Connection established");
+        ESP_ERROR_CHECK(ble_gap_conn_find(conn_handle, &desc));
+        bl_print_ble_gap_conn_desc(&desc);
+        // hid_clean_vars(&desc);
+    } else {
+        ESP_LOGE(BL_TAG, "Connection failed, status = %d", status);
+        bl_start_advertising();
+    }
+
+    return 0;
+}
+
+// to do: think hid_set_disconnected
+int bl_gap_event_disconnect(int reason, struct ble_gap_conn_desc *conn) {
+    ESP_LOGI(BL_TAG, "Disconnected, reason = %d", reason);
+    bl_print_ble_gap_conn_desc(conn);
+    // hid_set_disconnected();
+    bl_start_advertising();
+
+    return 0;
+}
+
+// to do
+int bl_gap_event_conn_update(int status, uint16_t conn_handle) {
+
+}
+
+// to do
+int bl_gap_event_adv_complete(int reason) {
+
+}
+
+// to do
+int bl_gap_event_enc_change(int status, uint16_t conn_handle) {
+
+}
+
+// to do
+int bl_gap_event_passkey_action(struct ble_gap_passkey_params *params, uint16_t conn_handle) {
+
+}
+
+// to do
+int bl_gap_event_subscribe(uint16_t conn_handle, uint16_t attr_handle, uint8_t reason, uint8_t prev_notify,
+                           uint8_t cur_notify, uint8_t prev_indicate, uint8_t cur_indicate) {
+
+}
+
+// to do
+int bl_gap_event_mtu(uint16_t conn_handle, uint16_t channel_id, uint16_t value) {
+
+}
+
+// to do
+int bl_gap_event_repeat_pairing(struct ble_gap_repeat_pairing *repeat_pairing) {
+
+}
+
+
+
+//
 // Callback functions 2
 //
 
-// to do
 int ble_gap_event_cb(struct ble_gap_event *event, void *arg) {
+    switch (event->type) {
+        case BLE_GAP_EVENT_CONNECT:
+            return bl_gap_event_connect(event->connect.status, event->connect.conn_handle);
+        case BLE_GAP_EVENT_DISCONNECT:
+            return bl_gap_event_disconnect(event->disconnect.reason, &event->disconnect.conn);
+        case BLE_GAP_EVENT_CONN_UPDATE:
+            return bl_gap_event_conn_update(event->conn_update.status, event->conn_update.conn_handle);
+        // case BLE_GAP_EVENT_CONN_UPDATE_REQ:
+        //     break;
+        // case BLE_GAP_EVENT_L2CAP_UPDATE_REQ:
+        //     break;
+        // case BLE_GAP_EVENT_TERM_FAILURE:
+        //     break;
+        // case BLE_GAP_EVENT_DISC:
+        //     break;
+        // case BLE_GAP_EVENT_DISC_COMPLETE:
+        //     break;
+        case BLE_GAP_EVENT_ADV_COMPLETE:
+            return bl_gap_event_adv_complete(event->adv_complete.reason);
+        case BLE_GAP_EVENT_ENC_CHANGE:
+            return bl_gap_event_enc_change(event->enc_change.status, event->enc_change.conn_handle);
+        case BLE_GAP_EVENT_PASSKEY_ACTION:
+            return bl_gap_event_passkey_action(event->passkey.params, event->passkey.conn_handle);
+        // case BLE_GAP_EVENT_NOTIFY_RX:
+        //     break;
+        // case BLE_GAP_EVENT_NOTIFY_TX:
+        //     break;
+        case BLE_GAP_EVENT_SUBSCRIBE:
+            return bl_gap_event_subscribe(event->subscribe.conn_handle, event->subscribe.attr_handle,
+                event->subscribe.reason, event->subscribe.prev_notify, event->subscribe.cur_notify,
+                event->subscribe.prev_indicate, event->subscribe.cur_indicate);
+        case BLE_GAP_EVENT_MTU:
+            return bl_gap_event_mtu(event->mtu.conn_handle, event->mtu.channel_id, event->mtu.value);
+        // case BLE_GAP_EVENT_IDENTITY_RESOLVED:
+        //     break;
+        case BLE_GAP_EVENT_REPEAT_PAIRING:
+            return bl_gap_event_repeat_pairing(&event->repeat_pairing);
+        // case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
+        //     break;
+        // case BLE_GAP_EVENT_EXT_DISC:
+        //     break;
+        // case BLE_GAP_EVENT_PERIODIC_SYNC:
+        //     break;
+        // case BLE_GAP_EVENT_PERIODIC_REPORT:
+        //     break;
+        // case BLE_GAP_EVENT_PERIODIC_SYNC_LOST:
+        //     break;
+        // case BLE_GAP_EVENT_SCAN_REQ_RCVD:
+        //     break;
+        // case BLE_GAP_EVENT_PERIODIC_TRANSFER:
+        //     break;
+        // case BLE_GAP_EVENT_PATHLOSS_THRESHOLD:
+        //     break;
+        // case BLE_GAP_EVENT_TRANSMIT_POWER:
+        //     break;
+        // case BLE_GAP_EVENT_SUBRATE_CHANGE:
+        //     break;
+        default:
+            break;
+    }
 
+    return 0;
 }
 
 
