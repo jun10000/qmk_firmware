@@ -24,6 +24,7 @@
         "ble_hci_trans.h": "c",
         "nimble_npl.h": "c",
         "hci_common.h": "c",
-        "ble.h": "c"
+        "ble.h": "c",
+        "typeinfo": "c"
     }
 }

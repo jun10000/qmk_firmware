@@ -10,6 +10,8 @@
 #define BL_UUID_GATT_SERVICE_BATTERY                0x180F
 #define BL_UUID_GATT_SERVICE_DEVICE_INFORMATION     0x180A
 #define BL_UUID_GATT_SERVICE_HID                    0x1812
+#define BL_APPEARANCE_HID_KEYBOARD                  0x03C1
+#define BL_ADVERTISING_INTERVAL_MS                  40      // min: 20
 
 static const char *BL_TAG = "ble-keyboard-bl";
 
@@ -51,18 +53,88 @@ static uint8_t bl_address_type;
 
 
 //
-// User side functions 2
+// Callback functions 2
 //
 
 // to do
-void bl_advertise(void) {
+int ble_gap_event_cb(struct ble_gap_event *event, void *arg) {
 
 }
 
 
 
 //
-// ble_hs_cfg callback functions
+// User side functions 2
+//
+
+void bl_start_advertising(void) {
+    ble_uuid16_t uuids[] = {
+        BLE_UUID16_INIT(BL_UUID_GATT_SERVICE_HID),
+    };
+    const char *name = ble_svc_gap_device_name();
+
+    struct ble_hs_adv_fields fields = {
+        .flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP,
+        .uuids16 = uuids,
+        .num_uuids16 = sizeof(uuids),
+        .uuids16_is_complete = 1,
+        .uuids32 = NULL,
+        .num_uuids32 = 0,
+        .uuids32_is_complete = 0,
+        .uuids128 = NULL,
+        .num_uuids128 = 0,
+        .uuids128_is_complete = 0,
+        .name = name,
+        .name_len = strlen(name),
+        .name_is_complete = 1,
+        .tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO,
+        .tx_pwr_lvl_is_present = 1,
+        .slave_itvl_range = NULL,
+        .svc_data_uuid16 = NULL,
+        .svc_data_uuid16_len = 0,
+        .public_tgt_addr = NULL,
+        .num_public_tgt_addrs = 0,
+        .appearance = BL_APPEARANCE_HID_KEYBOARD,
+        .appearance_is_present = 1,
+        .adv_itvl = BL_ADVERTISING_INTERVAL_MS,
+        .adv_itvl_is_present = 1,
+        .svc_data_uuid32 = NULL,
+        .svc_data_uuid32_len = 0,
+        .svc_data_uuid128 = NULL,
+        .svc_data_uuid128_len = 0,
+        .uri = NULL,
+        .uri_len = 0,
+        .mfg_data = NULL,
+        .mfg_data_len = 0,
+    };
+
+    struct ble_gap_adv_params params = {
+        .conn_mode = BLE_GAP_CONN_MODE_UND,
+        .disc_mode = BLE_GAP_DISC_MODE_GEN,
+        .itvl_min = 0,
+        .itvl_max = 0,
+        .channel_map = 0,
+        .filter_policy = 0,
+        .high_duty_cycle = 0,
+    };
+
+    int result = ble_gap_adv_set_fields(&fields);
+    if (result != 0) {
+        ESP_LOGE(BL_TAG, "Set advertisement data failed, result = %d", result);
+        return;
+    }
+
+    result = ble_gap_adv_start(bl_address_type, NULL, BLE_HS_FOREVER, &params, ble_gap_event_cb, NULL);
+    if (result != 0) {
+        ESP_LOGE(BL_TAG, "Start advertising failed, result = %d", result);
+        return;
+    }
+}
+
+
+
+//
+// Callback functions 1
 //
 
 void ble_hs_cfg_gatts_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg) {
@@ -112,7 +184,7 @@ void ble_hs_cfg_sync_cb(void) {
     }
 
     ESP_LOGI(BL_TAG, "Device address = "MACSTR, MAC2STR(address));
-    bl_advertise();
+    bl_start_advertising();
 }
 
 
@@ -173,6 +245,10 @@ esp_err_t bl_initialize_gatt_server(void) {
     if (ble_svc_gap_device_name_set(TAG) != 0) {
         return ESP_FAIL;
     }
+
+    if (ble_svc_gap_device_appearance_set(BL_APPEARANCE_HID_KEYBOARD) != 0) {
+        return ESP_FAIL;
+    };
 
     return ESP_OK;
 }
