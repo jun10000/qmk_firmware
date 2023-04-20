@@ -123,44 +123,107 @@ int bl_gap_event_disconnect(int reason, struct ble_gap_conn_desc *conn) {
     bl_print_ble_gap_conn_desc(conn);
     // hid_set_disconnected();
     bl_start_advertising();
+    
+    return 0;
+}
+
+int bl_gap_event_conn_update(int status, uint16_t conn_handle) {
+    struct ble_gap_conn_desc desc;
+
+    ESP_LOGI(BL_TAG, "Connection updated, status = %d", status);
+    ESP_ERROR_CHECK(ble_gap_conn_find(conn_handle, &desc));
+    bl_print_ble_gap_conn_desc(&desc);
 
     return 0;
 }
 
-// to do
-int bl_gap_event_conn_update(int status, uint16_t conn_handle) {
+int bl_gap_event_conn_update_req(const struct ble_gap_upd_params *peer_params,
+                                 struct ble_gap_upd_params *self_params, uint16_t conn_handle) {
+    ESP_LOGI(BL_TAG, "Connection update requested");
 
+    return 0;
 }
 
-// to do
 int bl_gap_event_adv_complete(int reason) {
+    ESP_LOGI(BL_TAG, "Advertise completed, reason = %d", reason);
+    bl_start_advertising();
 
+    return 0;
 }
 
-// to do
 int bl_gap_event_enc_change(int status, uint16_t conn_handle) {
+    struct ble_gap_conn_desc desc;
 
+    ESP_LOGI(BL_TAG, "Encryption changed, status = %d", status);
+    ESP_ERROR_CHECK(ble_gap_conn_find(conn_handle, &desc));
+    bl_print_ble_gap_conn_desc(&desc);
+
+    return 0;
 }
 
-// to do
 int bl_gap_event_passkey_action(struct ble_gap_passkey_params *params, uint16_t conn_handle) {
+    ESP_LOGI(BL_TAG, "Passkey action started");
 
+    switch (params->action) {
+        case BLE_SM_IOACT_NONE:
+            break;
+        // case BLE_SM_IOACT_OOB:
+        //     break;
+        // case BLE_SM_IOACT_INPUT:
+        //     break;
+        // case BLE_SM_IOACT_DISP:
+        //     break;
+        // case BLE_SM_IOACT_NUMCMP:
+        //     break;
+        // case BLE_SM_IOACT_OOB_SC:
+        //     break;
+        default:
+            ESP_LOGE(BL_TAG, "Detected bonding is not supported, action = %d", params->action);
+            break;
+    }
+
+    ESP_LOGI(BL_TAG, "Passkey action finished");
+
+    return 0;
 }
 
-// to do
+int bl_gap_event_notify_tx(int status, uint16_t conn_handle, uint16_t attr_handle, uint8_t indication) {
+    ESP_LOGI(BL_TAG,
+        "TX notification / indication received, "
+        "status = %d, conn_handle = %d, attr_handle = %d, indication = %d",
+        status, conn_handle, attr_handle, indication);
+    
+    return 0;
+}
+
+// to do: think hid_set_notify
 int bl_gap_event_subscribe(uint16_t conn_handle, uint16_t attr_handle, uint8_t reason, uint8_t prev_notify,
                            uint8_t cur_notify, uint8_t prev_indicate, uint8_t cur_indicate) {
+    ESP_LOGI(BL_TAG,
+        "Subscribed: conn_handle = %d, attr_handle = %d, reason = %d, prev_notify = %d, "
+        "cur_notify = %d, prev_indicate = %d, cur_indicate = %d",
+        conn_handle, attr_handle, reason, prev_notify, cur_notify, prev_indicate, cur_indicate);
+    // hid_set_notify(event->subscribe.attr_handle,
+    //             event->subscribe.cur_notify,
+    //             event->subscribe.cur_indicate);
 
+    return 0;
 }
 
-// to do
 int bl_gap_event_mtu(uint16_t conn_handle, uint16_t channel_id, uint16_t value) {
-
+    ESP_LOGI(BL_TAG, "MTU updated, conn_handle = %d, channel_id = %d, value = %d",
+        conn_handle, channel_id, value);
+    
+    return 0;
 }
 
-// to do
 int bl_gap_event_repeat_pairing(struct ble_gap_repeat_pairing *repeat_pairing) {
+    struct ble_gap_conn_desc desc;
 
+    ESP_ERROR_CHECK(ble_gap_conn_find(repeat_pairing->conn_handle, &desc));
+    ble_store_util_delete_peer(&desc.peer_id_addr);
+
+    return BLE_GAP_REPEAT_PAIRING_RETRY;
 }
 
 
@@ -177,8 +240,9 @@ int ble_gap_event_cb(struct ble_gap_event *event, void *arg) {
             return bl_gap_event_disconnect(event->disconnect.reason, &event->disconnect.conn);
         case BLE_GAP_EVENT_CONN_UPDATE:
             return bl_gap_event_conn_update(event->conn_update.status, event->conn_update.conn_handle);
-        // case BLE_GAP_EVENT_CONN_UPDATE_REQ:
-        //     break;
+        case BLE_GAP_EVENT_CONN_UPDATE_REQ:
+            return bl_gap_event_conn_update_req(event->conn_update_req.peer_params,
+                event->conn_update_req.self_params, event->conn_update_req.conn_handle);
         // case BLE_GAP_EVENT_L2CAP_UPDATE_REQ:
         //     break;
         // case BLE_GAP_EVENT_TERM_FAILURE:
@@ -195,8 +259,9 @@ int ble_gap_event_cb(struct ble_gap_event *event, void *arg) {
             return bl_gap_event_passkey_action(event->passkey.params, event->passkey.conn_handle);
         // case BLE_GAP_EVENT_NOTIFY_RX:
         //     break;
-        // case BLE_GAP_EVENT_NOTIFY_TX:
-        //     break;
+        case BLE_GAP_EVENT_NOTIFY_TX:
+            return bl_gap_event_notify_tx(event->notify_tx.status, event->notify_tx.conn_handle,
+                event->notify_tx.attr_handle, event->notify_tx.indication);
         case BLE_GAP_EVENT_SUBSCRIBE:
             return bl_gap_event_subscribe(event->subscribe.conn_handle, event->subscribe.attr_handle,
                 event->subscribe.reason, event->subscribe.prev_notify, event->subscribe.cur_notify,
@@ -228,6 +293,7 @@ int ble_gap_event_cb(struct ble_gap_event *event, void *arg) {
         // case BLE_GAP_EVENT_SUBRATE_CHANGE:
         //     break;
         default:
+            ESP_LOGI(BL_TAG, "Other GAP event is occured, type = %d", event->type);
             break;
     }
 
