@@ -7,26 +7,58 @@
 #include "host/ble_hs.h"
 // #include "utility_led.h"
 
-#define BL_UUID_GATT_SERVICE_BATTERY                0x180F
-#define BL_UUID_GATT_SERVICE_DEVICE_INFORMATION     0x180A
-#define BL_UUID_GATT_SERVICE_HID                    0x1812
-#define BL_APPEARANCE_HID_KEYBOARD                  0x03C1
-#define BL_ADVERTISING_INTERVAL_MS                  40      // min: 20
+#define BL_UUID_SERVICE_BAS             0x180F      // Battery Service
+#define BL_UUID_SERVICE_DIS             0x180A      // Device Information Service
+#define BL_UUID_SERVICE_HID             0x1812      // HID Service
+#define BL_UUID_CHARACTERISTIC_BAL      0x2A19      // Battery Level
+#define BL_UUID_DESCRIPTOR_CPF          0x2904      // Characteristic Presentation Format
+#define BL_UUID_APPEARANCE_KEYBOARD     0x03C1
+#define BL_ADVERTISING_INTERVAL_MS      40          // min: 20
 
 static const char *BL_TAG = "ble-keyboard-bl";
 
 // to do
-static const struct ble_gatt_svc_def BL_SERVICE_BATTERY = {
+int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
+                      struct ble_gatt_access_ctxt *ctxt, void *arg) {
+
+}
+
+static const struct ble_gatt_dsc_def BL_DESCRIPTOR_CPF = {
+    .uuid = BLE_UUID16_DECLARE(BL_UUID_DESCRIPTOR_CPF),
+    .att_flags = BLE_ATT_F_READ | BLE_ATT_F_READ_ENC,
+    .min_key_size = 0,
+    .access_cb = bl_data_access_cb,
+    .arg = NULL,
+};
+
+// to do: think .val_handle
+static const struct ble_gatt_chr_def BL_CHARACTERISTIC_BAL = {
+    .uuid = BLE_UUID16_DECLARE(BL_UUID_CHARACTERISTIC_BAL),
+    .access_cb = bl_data_access_cb,
+    .arg = NULL,
+    .descriptors = {
+        BL_DESCRIPTOR_CPF,
+        {0},
+    },
+    .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY | BLE_GATT_CHR_F_INDICATE,
+    .min_key_size = 0,
+    .val_handle = ???,
+}
+
+static const struct ble_gatt_svc_def BL_SERVICE_BAS = {
     .type = BLE_GATT_SVC_TYPE_PRIMARY,
-    .uuid = BLE_UUID16_DECLARE(BL_UUID_GATT_SERVICE_BATTERY),
+    .uuid = BLE_UUID16_DECLARE(BL_UUID_SERVICE_BAS),
     .includes = NULL,
-    .characteristics = ???,
+    .characteristics = {
+        BL_CHARACTERISTIC_BAL,
+        {0},
+    },
 };
 
 // to do
-static const struct ble_gatt_svc_def BL_SERVICE_DEVICE_INFORMATION = {
+static const struct ble_gatt_svc_def BL_SERVICE_DIS = {
     .type = BLE_GATT_SVC_TYPE_PRIMARY,
-    .uuid = BLE_UUID16_DECLARE(BL_UUID_GATT_SERVICE_DEVICE_INFORMATION),
+    .uuid = BLE_UUID16_DECLARE(BL_UUID_SERVICE_DIS),
     .includes = NULL,
     .characteristics = ???,
 };
@@ -34,10 +66,10 @@ static const struct ble_gatt_svc_def BL_SERVICE_DEVICE_INFORMATION = {
 // to do
 static const struct ble_gatt_svc_def BL_SERVICE_HID = {
     .type = BLE_GATT_SVC_TYPE_PRIMARY,
-    .uuid = BLE_UUID16_DECLARE(BL_UUID_GATT_SERVICE_HID),
+    .uuid = BLE_UUID16_DECLARE(BL_UUID_SERVICE_HID),
     .includes = {
-        &BL_SERVICE_BATTERY,
-        &BL_SERVICE_DEVICE_INFORMATION,
+        &BL_SERVICE_BAS,
+        &BL_SERVICE_DIS,
         NULL,
     },
     .characteristics = ???,
@@ -308,7 +340,7 @@ int ble_gap_event_cb(struct ble_gap_event *event, void *arg) {
 
 void bl_start_advertising(void) {
     ble_uuid16_t uuids[] = {
-        BLE_UUID16_INIT(BL_UUID_GATT_SERVICE_HID),
+        BLE_UUID16_INIT(BL_UUID_SERVICE_HID),
     };
     const char *name = ble_svc_gap_device_name();
 
@@ -333,7 +365,7 @@ void bl_start_advertising(void) {
         .svc_data_uuid16_len = 0,
         .public_tgt_addr = NULL,
         .num_public_tgt_addrs = 0,
-        .appearance = BL_APPEARANCE_HID_KEYBOARD,
+        .appearance = BL_UUID_APPEARANCE_KEYBOARD,
         .appearance_is_present = 1,
         .adv_itvl = BL_ADVERTISING_INTERVAL_MS,
         .adv_itvl_is_present = 1,
@@ -485,7 +517,7 @@ esp_err_t bl_initialize_gatt_server(void) {
         return ESP_FAIL;
     }
 
-    if (ble_svc_gap_device_appearance_set(BL_APPEARANCE_HID_KEYBOARD) != 0) {
+    if (ble_svc_gap_device_appearance_set(BL_UUID_APPEARANCE_KEYBOARD) != 0) {
         return ESP_FAIL;
     };
 
