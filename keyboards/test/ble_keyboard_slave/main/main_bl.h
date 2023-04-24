@@ -29,11 +29,57 @@
 #define BL_UUID_APPEARANCE_KEYBOARD         0x03C1
 #define BL_ADVERTISING_INTERVAL_MS          40          // min: 20
 
+typedef enum {
+    BL_INDEX_CHR_BATTERY_LEVEL = 1
+    BL_INDEX_CHR_MANUFACTURER_NAME
+    BL_INDEX_CHR_MODEL_NUMBER
+    BL_INDEX_CHR_SERIAL_NUMBER
+    BL_INDEX_CHR_HARDWARE_REVISION
+    BL_INDEX_CHR_FIRMWARE_REVISION
+    BL_INDEX_CHR_SOFTWARE_REVISION
+    BL_INDEX_CHR_SYSTEM_ID
+    BL_INDEX_CHR_PNP_ID
+    BL_INDEX_CHR_REPORT_KEYBOARD_INPUT
+    BL_INDEX_CHR_REPORT_MOUSE_INPUT
+    BL_INDEX_CHR_REPORT_KEYBOARD_OUTPUT
+    BL_INDEX_CHR_REPORT_FEATURE
+    BL_INDEX_CHR_REPORT_MAP
+    BL_INDEX_CHR_HID_INFORMATION
+    BL_INDEX_CHR_HID_CONTROL_POINT
+    BL_INDEX_DESCRIPTOR_CPF
+    BL_INDEX_DESCRIPTOR_RR
+    BL_INDEX_DESCRIPTOR_ERR
+} BL_INDEX_LIST;
+
 static const char *BL_TAG = "ble-keyboard-bl";
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++
 // GATT block
 //++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//
+// User side functions 1
+//
+
+static int bl_mbuf_read(const struct os_mbuf *om, void *dst, uint16_t exp_len) {
+    if (OS_MBUF_PKTLEN(om) != exp_len) {
+        return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+    }
+    
+    if (ble_hs_mbuf_to_flat(om, dst, exp_len, NULL) != 0) {
+        return BLE_ATT_ERR_UNLIKELY;
+    }
+    
+    return 0;
+}
+
+static int bl_mbuf_write(struct os_mbuf *om, const void *src, uint16_t len) {
+    if (os_mbuf_append(om, src, len) != 0) {
+        return BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+
+    return 0;
+}
 
 //
 // Callback functions 1
@@ -42,7 +88,62 @@ static const char *BL_TAG = "ble-keyboard-bl";
 // to do
 int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                       struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    bool is_descriptor = (ctxt->op == BLE_GATT_ACCESS_OP_READ_DSC ||
+                          ctxt->op == BLE_GATT_ACCESS_OP_WRITE_DSC);
+    bool is_read = (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR ||
+                    ctxt->op == BLE_GATT_ACCESS_OP_READ_DSC);
+    uint16_t uuid = ble_uuid_u16(is_descriptor ? ctxt->dsc->uuid : ctxt->chr->uuid);
+    uint8_t index = (uint8_t)arg;
 
+    ESP_LOGI(BL_TAG, "%s %s access occured, uuid = %04X, index = %d, attr_handle = %d",
+        is_descriptor ? "Descriptor" : "Characteristic",
+        is_read ? "read" : "write",
+        uuid, index, attr_handle);
+
+    switch (index) {
+        case BL_INDEX_CHR_BATTERY_LEVEL:
+            break;
+        case BL_INDEX_CHR_MANUFACTURER_NAME:
+            break;
+        case BL_INDEX_CHR_MODEL_NUMBER:
+            break;
+        case BL_INDEX_CHR_SERIAL_NUMBER:
+            break;
+        case BL_INDEX_CHR_HARDWARE_REVISION:
+            break;
+        case BL_INDEX_CHR_FIRMWARE_REVISION:
+            break;
+        case BL_INDEX_CHR_SOFTWARE_REVISION:
+            break;
+        case BL_INDEX_CHR_SYSTEM_ID:
+            break;
+        case BL_INDEX_CHR_PNP_ID:
+            break;
+        case BL_INDEX_CHR_REPORT_KEYBOARD_INPUT:
+            break;
+        case BL_INDEX_CHR_REPORT_MOUSE_INPUT:
+            break;
+        case BL_INDEX_CHR_REPORT_KEYBOARD_OUTPUT:
+            break;
+        case BL_INDEX_CHR_REPORT_FEATURE:
+            break;
+        case BL_INDEX_CHR_REPORT_MAP:
+            break;
+        case BL_INDEX_CHR_HID_INFORMATION:
+            break;
+        case BL_INDEX_CHR_HID_CONTROL_POINT:
+            break;
+        case BL_INDEX_DESCRIPTOR_CPF:
+            break;
+        case BL_INDEX_DESCRIPTOR_RR:
+            break;
+        case BL_INDEX_DESCRIPTOR_ERR:
+            break;
+        default:
+            break;
+    }
+
+    return 0;
 }
 
 //
@@ -54,7 +155,7 @@ static const struct ble_gatt_dsc_def BL_DESCRIPTOR_CPF = {
     .att_flags = BLE_ATT_F_READ,
     .min_key_size = 0,
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_DESCRIPTOR_CPF,
 };
 
 static const struct ble_gatt_dsc_def BL_DESCRIPTOR_RR = {
@@ -62,7 +163,7 @@ static const struct ble_gatt_dsc_def BL_DESCRIPTOR_RR = {
     .att_flags = BLE_ATT_F_READ,
     .min_key_size = 0,
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_DESCRIPTOR_RR,
 };
 
 static const struct ble_gatt_dsc_def BL_DESCRIPTOR_ERR = {
@@ -70,7 +171,7 @@ static const struct ble_gatt_dsc_def BL_DESCRIPTOR_ERR = {
     .att_flags = BLE_ATT_F_READ,
     .min_key_size = 0,
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_DESCRIPTOR_ERR,
 };
 
 //
@@ -81,7 +182,7 @@ static const struct ble_gatt_dsc_def BL_DESCRIPTOR_ERR = {
 static const struct ble_gatt_chr_def BL_CHR_BATTERY_LEVEL = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_BATTERY_LEVEL),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_BATTERY_LEVEL,
     .descriptors = {
         BL_DESCRIPTOR_CPF,
         {0},
@@ -95,7 +196,7 @@ static const struct ble_gatt_chr_def BL_CHR_BATTERY_LEVEL = {
 static const struct ble_gatt_chr_def BL_CHR_MANUFACTURER_NAME = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_MANUFACTURER_NAME),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_MANUFACTURER_NAME,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
@@ -106,7 +207,7 @@ static const struct ble_gatt_chr_def BL_CHR_MANUFACTURER_NAME = {
 static const struct ble_gatt_chr_def BL_CHR_MODEL_NUMBER = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_MODEL_NUMBER),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_MODEL_NUMBER,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
@@ -117,7 +218,7 @@ static const struct ble_gatt_chr_def BL_CHR_MODEL_NUMBER = {
 static const struct ble_gatt_chr_def BL_CHR_SERIAL_NUMBER = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_SERIAL_NUMBER),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_SERIAL_NUMBER,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
@@ -128,7 +229,7 @@ static const struct ble_gatt_chr_def BL_CHR_SERIAL_NUMBER = {
 static const struct ble_gatt_chr_def BL_CHR_HARDWARE_REVISION = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_HARDWARE_REVISION),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_HARDWARE_REVISION,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
@@ -139,7 +240,7 @@ static const struct ble_gatt_chr_def BL_CHR_HARDWARE_REVISION = {
 static const struct ble_gatt_chr_def BL_CHR_FIRMWARE_REVISION = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_FIRMWARE_REVISION),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_FIRMWARE_REVISION,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
@@ -150,7 +251,7 @@ static const struct ble_gatt_chr_def BL_CHR_FIRMWARE_REVISION = {
 static const struct ble_gatt_chr_def BL_CHR_SOFTWARE_REVISION = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_SOFTWARE_REVISION),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_SOFTWARE_REVISION,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
@@ -161,7 +262,7 @@ static const struct ble_gatt_chr_def BL_CHR_SOFTWARE_REVISION = {
 static const struct ble_gatt_chr_def BL_CHR_SYSTEM_ID = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_SYSTEM_ID),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_SYSTEM_ID,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
@@ -172,7 +273,7 @@ static const struct ble_gatt_chr_def BL_CHR_SYSTEM_ID = {
 static const struct ble_gatt_chr_def BL_CHR_PNP_ID = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_PNP_ID),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_PNP_ID,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
@@ -183,7 +284,7 @@ static const struct ble_gatt_chr_def BL_CHR_PNP_ID = {
 static const struct ble_gatt_chr_def BL_CHR_REPORT_KEYBOARD_INPUT = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_REPORT_KEYBOARD_INPUT,
     .descriptors = {
         BL_DESCRIPTOR_RR,
         {0},
@@ -197,7 +298,7 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_KEYBOARD_INPUT = {
 static const struct ble_gatt_chr_def BL_CHR_REPORT_MOUSE_INPUT = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_REPORT_MOUSE_INPUT,
     .descriptors = {
         BL_DESCRIPTOR_RR,
         {0},
@@ -211,7 +312,7 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_MOUSE_INPUT = {
 static const struct ble_gatt_chr_def BL_CHR_REPORT_KEYBOARD_OUTPUT = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_REPORT_KEYBOARD_OUTPUT,
     .descriptors = {
         BL_DESCRIPTOR_RR,
         {0},
@@ -225,7 +326,7 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_KEYBOARD_OUTPUT = {
 static const struct ble_gatt_chr_def BL_CHR_REPORT_FEATURE = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_REPORT_FEATURE,
     .descriptors = {
         BL_DESCRIPTOR_RR,
         {0},
@@ -239,7 +340,7 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_FEATURE = {
 static const struct ble_gatt_chr_def BL_CHR_REPORT_MAP = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT_MAP),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_REPORT_MAP,
     .descriptors = {
         BL_DESCRIPTOR_ERR,
         {0},
@@ -253,7 +354,7 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_MAP = {
 static const struct ble_gatt_chr_def BL_CHR_HID_INFORMATION = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_HID_INFORMATION),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_HID_INFORMATION,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
@@ -264,7 +365,7 @@ static const struct ble_gatt_chr_def BL_CHR_HID_INFORMATION = {
 static const struct ble_gatt_chr_def BL_CHR_HID_CONTROL_POINT = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_HID_CONTROL_POINT),
     .access_cb = bl_data_access_cb,
-    .arg = NULL,
+    .arg = (void *)BL_INDEX_CHR_HID_CONTROL_POINT,
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_WRITE_NO_RSP,
     .min_key_size = 0,
