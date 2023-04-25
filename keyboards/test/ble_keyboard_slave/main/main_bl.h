@@ -7,6 +7,9 @@
 #include "host/ble_hs.h"
 // #include "utility_led.h"
 
+#define BL_F_CHR_HIDI_REMOTE_WAKE               1
+#define BL_F_CHR_HIDI_NORMALLY_CONNECTABLE      2
+
 #define BL_UUID_SERVICE_BAS                 0x180F      // Battery Service
 #define BL_UUID_SERVICE_DIS                 0x180A      // Device Information Service
 #define BL_UUID_SERVICE_HID                 0x1812      // HID Service
@@ -26,7 +29,14 @@
 #define BL_UUID_DSC_CPF                     0x2904      // Characteristic Presentation Format
 #define BL_UUID_DSC_RR                      0x2908      // Report Reference
 #define BL_UUID_DSC_ERR                     0x2907      // External Report Reference
-#define BL_UUID_APPEARANCE_KEYBOARD         0x03C1
+#define BL_UUID_UNIT_PERCENTAGE             0x27AD
+#define BL_VALUE_APPEARANCE_KEYBOARD        0x03C1
+#define BL_VALUE_CPF_FORMAT_UINT8           0x04
+#define BL_VALUE_CPF_NAME_SPACE_BTSIG       0x01
+#define BL_VALUE_CPF_DESCRIPTION_UNKNOWN    0x0000
+#define BL_USB_BCDHID                       0x0111      // USB HID 1.11
+#define BL_COUNTRY_CODE_NOT_LOCALIZED       0x00
+
 #define BL_ADVERTISING_INTERVAL_MS          40          // min: 20
 
 typedef enum {
@@ -53,6 +63,20 @@ typedef enum {
     BL_INDEX_DSC_RR_REPORT_FEATURE
     BL_INDEX_DSC_ERR_REPORT_MAP
 } BL_INDEX_LIST;
+
+typedef struct {
+    uint16_t bcdHID;
+    int8_t bCountryCode;
+    uint8_t Flags;
+} __attribute__((packed)) bl_chr_hid_information_t;
+
+typedef struct {
+    uint8_t format;
+    int8_t exponent;
+    uint16_t unit;
+    uint8_t name_space;
+    uint16_t description;
+} __attribute__((packed)) bl_dsc_cpf_t;
 
 static const char *BL_TAG = "ble-keyboard-bl";
 
@@ -105,23 +129,34 @@ int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
 
     switch (index) {
         case BL_INDEX_CHR_BATTERY_LEVEL:
-            break;
+            uint8_t battery_level = 80;
+            return bl_mbuf_write(ctxt->om, &battery_level, 1);
         case BL_INDEX_CHR_MANUFACTURER_NAME:
-            break;
+            char *manufacturer_name = "Manufacturer0";
+            return bl_mbuf_write(ctxt->om, manufacturer_name, strlen(manufacturer_name));
         case BL_INDEX_CHR_MODEL_NUMBER:
-            break;
+            char *model_number = "0x1234";
+            return bl_mbuf_write(ctxt->om, model_number, strlen(model_number));
         case BL_INDEX_CHR_SERIAL_NUMBER:
-            break;
+            char *serial_number = "0x5678";
+            return bl_mbuf_write(ctxt->om, serial_number, strlen(serial_number));
         case BL_INDEX_CHR_HARDWARE_REVISION:
-            break;
+            char *hardware_revision = "0x0001";
+            return bl_mbuf_write(ctxt->om, hardware_revision, strlen(hardware_revision));
         case BL_INDEX_CHR_FIRMWARE_REVISION:
-            break;
+            char *firmware_revision = "0x0010";
+            return bl_mbuf_write(ctxt->om, firmware_revision, strlen(firmware_revision));
         case BL_INDEX_CHR_SOFTWARE_REVISION:
-            break;
+            char *software_revision = "0x0100";
+            return bl_mbuf_write(ctxt->om, software_revision, strlen(software_revision));
+        // to do: think later
         case BL_INDEX_CHR_SYSTEM_ID:
-            break;
+            char *system_id = "esp32";
+            return bl_mbuf_write(ctxt->om, system_id, strlen(system_id));
+        // to do: think later
         case BL_INDEX_CHR_PNP_ID:
-            break;
+            uint8_t pnp_id[] = {0x00, 0x34, 0x12, 0x78, 0x56, 0x00, 0x01};
+            return bl_mbuf_write(ctxt->om, pnp_id, sizeof(pnp_id));
         case BL_INDEX_CHR_REPORT_KEYBOARD_INPUT:
             break;
         case BL_INDEX_CHR_REPORT_MOUSE_INPUT:
@@ -133,11 +168,32 @@ int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
         case BL_INDEX_CHR_REPORT_MAP:
             break;
         case BL_INDEX_CHR_HID_INFORMATION:
-            break;
+            bl_chr_hid_information_t hid_information = {
+                .bcdHID = BL_USB_BCDHID,
+                .bCountryCode = BL_COUNTRY_CODE_NOT_LOCALIZED,
+                .Flags = BL_F_CHR_HIDI_REMOTE_WAKE,
+            };
+
+            return bl_mbuf_write(ctxt->om, &hid_information, sizeof(hid_information));
         case BL_INDEX_CHR_HID_CONTROL_POINT:
-            break;
+            uint8_t hid_control_point;
+            int hid_control_point_result = bl_mbuf_read(ctxt->om, &hid_control_point, 1);
+            if (hid_control_point_result != 0) {
+                return hid_control_point_result;
+            }
+
+            ESP_LOGI(BL_TAG, "HID Host is %s", hid_control_point ? "resumed" : "suspended");
+            return 0;
         case BL_INDEX_DSC_CPF_BATTERY_LEVEL:
-            break;
+            bl_dsc_cpf_t cpf_battery_level = {
+                .format = BL_VALUE_CPF_FORMAT_UINT8,
+                .exponent = 0,
+                .unit = BL_UUID_UNIT_PERCENTAGE,
+                .name_space = BL_VALUE_CPF_NAME_SPACE_BTSIG,
+                .description = BL_VALUE_CPF_DESCRIPTION_UNKNOWN,
+            };
+
+            return bl_mbuf_write(ctxt->om, &cpf_battery_level, sizeof(cpf_battery_level));
         case BL_INDEX_DSC_RR_REPORT_KEYBOARD_INPUT:
             break;
         case BL_INDEX_DSC_RR_REPORT_MOUSE_INPUT:
@@ -746,7 +802,7 @@ void bl_start_advertising(void) {
         .svc_data_uuid16_len = 0,
         .public_tgt_addr = NULL,
         .num_public_tgt_addrs = 0,
-        .appearance = BL_UUID_APPEARANCE_KEYBOARD,
+        .appearance = BL_VALUE_APPEARANCE_KEYBOARD,
         .appearance_is_present = 1,
         .adv_itvl = BL_ADVERTISING_INTERVAL_MS,
         .adv_itvl_is_present = 1,
@@ -898,7 +954,7 @@ esp_err_t bl_initialize_gatt_server(void) {
         return ESP_FAIL;
     }
 
-    if (ble_svc_gap_device_appearance_set(BL_UUID_APPEARANCE_KEYBOARD) != 0) {
+    if (ble_svc_gap_device_appearance_set(BL_VALUE_APPEARANCE_KEYBOARD) != 0) {
         return ESP_FAIL;
     };
 
