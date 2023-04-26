@@ -5,7 +5,8 @@
 #include "esp_nimble_hci.h"
 #include "nimble/nimble_port.h"
 #include "host/ble_hs.h"
-// #include "utility_led.h"
+#include "main_usb.h"
+#include "utility_led.h"
 
 #define BL_F_CHR_HIDI_REMOTE_WAKE               1
 #define BL_F_CHR_HIDI_NORMALLY_CONNECTABLE      2
@@ -31,13 +32,17 @@
 #define BL_UUID_DSC_ERR                     0x2907      // External Report Reference
 #define BL_UUID_UNIT_PERCENTAGE             0x27AD
 #define BL_VALUE_APPEARANCE_KEYBOARD        0x03C1
+#define BL_VALUE_USB_BCDHID                 0x0111      // USB HID 1.11
 #define BL_VALUE_CPF_FORMAT_UINT8           0x04
 #define BL_VALUE_CPF_NAME_SPACE_BTSIG       0x01
 #define BL_VALUE_CPF_DESCRIPTION_UNKNOWN    0x0000
-#define BL_USB_BCDHID                       0x0111      // USB HID 1.11
-#define BL_COUNTRY_CODE_NOT_LOCALIZED       0x00
+#define BL_VALUE_HIDI_CC_NOT_LOCALIZED      0x00
+#define BL_VALUE_RR_REPORT_TYPE_INPUT       0x01
+#define BL_VALUE_RR_REPORT_TYPE_OUTPUT      0x02
+#define BL_VALUE_RR_REPORT_TYPE_FEATURE     0x03
 
 #define BL_ADVERTISING_INTERVAL_MS          40          // min: 20
+#define BL_LOOP_WAIT_MS                     10
 
 typedef enum {
     BL_INDEX_CHR_BATTERY_LEVEL = 1
@@ -78,7 +83,14 @@ typedef struct {
     uint16_t description;
 } __attribute__((packed)) bl_dsc_cpf_t;
 
+typedef struct {
+    uint8_t report_id;
+    uint8_t report_type;
+} __attribute__((packed)) bl_dsc_rr_t;
+
 static const char *BL_TAG = "ble-keyboard-bl";
+
+static QueueHandle_t bl_queue_keyboard;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++
 // GATT block
@@ -112,7 +124,6 @@ int bl_mbuf_write(struct os_mbuf *om, const void *src, uint16_t len) {
 // Callback functions 1
 //
 
-// to do
 int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                       struct ble_gatt_access_ctxt *ctxt, void *arg) {
     bool is_descriptor = (ctxt->op == BLE_GATT_ACCESS_OP_READ_DSC ||
@@ -158,19 +169,53 @@ int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
             uint8_t pnp_id[] = {0x00, 0x34, 0x12, 0x78, 0x56, 0x00, 0x01};
             return bl_mbuf_write(ctxt->om, pnp_id, sizeof(pnp_id));
         case BL_INDEX_CHR_REPORT_KEYBOARD_INPUT:
-            break;
+            if (uxQueueMessagesWaiting(bl_queue_keyboard) == 0) {
+                return 0;
+            }
+
+            hid_keyboard_report_t report_keyboard_input;
+            if (xQueueReceive(bl_queue_keyboard, &report_keyboard_input, 0) != pdTRUE) {
+                ESP_LOGE(USB_TAG, "Receive keyboard report from the queue failed");
+                return 0;
+            }
+
+            ESP_LOGI(BL_TAG,
+                "Sending keyboard report\n"
+                "    modifier = %d\n"
+                "    keycode = {%d, %d, %d, %d, %d, %d}",
+                report_keyboard_input.modifier,
+                report_keyboard_input.keycode[0],
+                report_keyboard_input.keycode[1],
+                report_keyboard_input.keycode[2],
+                report_keyboard_input.keycode[3],
+                report_keyboard_input.keycode[4],
+                report_keyboard_input.keycode[5]);
+            return bl_mbuf_write(ctxt->om, &report_keyboard_input, sizeof(report_keyboard_input));
         case BL_INDEX_CHR_REPORT_MOUSE_INPUT:
-            break;
+            return 0;
         case BL_INDEX_CHR_REPORT_KEYBOARD_OUTPUT:
-            break;
+            uint8_t report_keyboard_output;
+            int report_keyboard_output_result = bl_mbuf_read(ctxt->om, &report_keyboard_output, 1);
+            if (report_keyboard_output_result != 0) {
+                return report_keyboard_output_result;
+            }
+
+            if (report_keyboard_output & KEYBOARD_LED_CAPSLOCK) {
+                led_enable();
+            } else {
+                led_disable();
+            }
+
+            ESP_LOGI(BL_TAG, "Received keyboard output report, led = %02X", report_keyboard_output);
+            return 0;
         case BL_INDEX_CHR_REPORT_FEATURE:
-            break;
+            return 0;
         case BL_INDEX_CHR_REPORT_MAP:
-            break;
+            return bl_mbuf_write(ctxt->om, USB_REPORT_DESCRIPTOR, sizeof(USB_REPORT_DESCRIPTOR));
         case BL_INDEX_CHR_HID_INFORMATION:
             bl_chr_hid_information_t hid_information = {
-                .bcdHID = BL_USB_BCDHID,
-                .bCountryCode = BL_COUNTRY_CODE_NOT_LOCALIZED,
+                .bcdHID = BL_VALUE_USB_BCDHID,
+                .bCountryCode = BL_VALUE_HIDI_CC_NOT_LOCALIZED,
                 .Flags = BL_F_CHR_HIDI_REMOTE_WAKE,
             };
 
@@ -195,15 +240,34 @@ int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
 
             return bl_mbuf_write(ctxt->om, &cpf_battery_level, sizeof(cpf_battery_level));
         case BL_INDEX_DSC_RR_REPORT_KEYBOARD_INPUT:
-            break;
+            bl_dsc_rr_t rr_report_keyboard_input = {
+                .report_id = HID_ITF_PROTOCOL_KEYBOARD,
+                .report_type = BL_VALUE_RR_REPORT_TYPE_INPUT,
+            };
+            return bl_mbuf_write(ctxt->om, &rr_report_keyboard_input, sizeof(rr_report_keyboard_input));
         case BL_INDEX_DSC_RR_REPORT_MOUSE_INPUT:
-            break;
+            bl_dsc_rr_t rr_report_mouse_input = {
+                .report_id = HID_ITF_PROTOCOL_MOUSE,
+                .report_type = BL_VALUE_RR_REPORT_TYPE_INPUT,
+            };
+            return bl_mbuf_write(ctxt->om, &rr_report_mouse_input, sizeof(rr_report_mouse_input));
         case BL_INDEX_DSC_RR_REPORT_KEYBOARD_OUTPUT:
-            break;
+            bl_dsc_rr_t rr_report_keyboard_output = {
+                .report_id = HID_ITF_PROTOCOL_KEYBOARD,
+                .report_type = BL_VALUE_RR_REPORT_TYPE_OUTPUT,
+            };
+            return bl_mbuf_write(ctxt->om, &rr_report_keyboard_output, sizeof(rr_report_keyboard_output));
+        // to do: think later
         case BL_INDEX_DSC_RR_REPORT_FEATURE:
-            break;
+            bl_dsc_rr_t rr_report_feature = {
+                .report_id = HID_ITF_PROTOCOL_NONE,
+                .report_type = BL_VALUE_RR_REPORT_TYPE_FEATURE,
+            };
+            return bl_mbuf_write(ctxt->om, &rr_report_feature, sizeof(rr_report_feature));
+        // to do: think later
         case BL_INDEX_DSC_ERR_REPORT_MAP:
-            break;
+            uint16_t err_report_map = BL_UUID_CHR_BATTERY_LEVEL;
+            return bl_mbuf_write(ctxt->om, &err_report_map, 2);
         default:
             return BLE_ATT_ERR_UNLIKELY;
     }
@@ -967,6 +1031,8 @@ void bl_task_run_nimble(void *param) {
 }
 
 void bl_start(void) {
+    bl_queue_keyboard = xQueueCreate(QUEUE_LENGTH, sizeof(hid_keyboard_report_t));
+
     ESP_ERROR_CHECK(bl_initialize_nvs_flash());
     ESP_ERROR_CHECK(esp_nimble_hci_init());
     ESP_ERROR_CHECK(nimble_port_init());
@@ -976,31 +1042,38 @@ void bl_start(void) {
     nimble_port_freertos_init(bl_task_run_nimble);
 }
 
-// to do
 void bl_task_transmit_data(void *param) {
     task_data_t *task_data = param;
     queue_data_t data;
+    hid_keyboard_report_t bl_report_keyboard = {
+        .modifier = 0,
+        .reserved = 0,
+        .keycode = {0},
+    };
 
-    // while (true) {
-    //     if (!tud_mounted() || uxQueueMessagesWaiting(task_data->queue) == 0) {
-    //         vTaskDelay(pdMS_TO_TICKS(BL_LOOP_WAIT_MS));
-    //         continue;
-    //     }
+    while (true) {
+        // to do
+        if (/* !tud_mounted() || */ uxQueueMessagesWaiting(task_data->queue) == 0) {
+            vTaskDelay(pdMS_TO_TICKS(BL_LOOP_WAIT_MS));
+            continue;
+        }
 
-    //     if (xQueueReceive(task_data->queue, &data, 0) != pdTRUE) {
-    //         ESP_LOGE(BL_TAG, "Receive data from the queue failed");
-    //         continue;
-    //     }
+        if (xQueueReceive(task_data->queue, &data, 0) != pdTRUE) {
+            ESP_LOGE(BL_TAG, "Receive data from the queue failed");
+            continue;
+        }
 
-    //     if (data.key_pressed) {
-    //         uint8_t send_keycodes[6] = { data.keycode_low };
-    //         if (!tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, send_keycodes)) {
-    //             ESP_LOGE(BL_TAG, "Send data to host failed");
-    //         }
-    //     } else {
-    //         if (!tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, NULL)) {
-    //             ESP_LOGE(BL_TAG, "Send data to host failed");
-    //         }
-    //     }
-    // }
+        if (data.key_pressed) {
+            array_uint8_add(bl_report_keyboard.keycode, 6, data.keycode_low);
+        } else {
+            array_uint8_remove(bl_report_keyboard.keycode, 6, data.keycode_low);
+        }
+
+        if (xQueueSend(bl_queue_keyboard, &bl_report_keyboard, 0) != pdTRUE) {
+            ESP_LOGE(BL_TAG, "Send keyboard report to the queue failed");
+        }
+
+        // to do
+        ble_gatts_notify(?conn_handle, ?chr_val_handle);
+    }
 }

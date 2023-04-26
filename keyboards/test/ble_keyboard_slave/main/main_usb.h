@@ -9,7 +9,7 @@
 #define USB_POLLING_MS          10
 #define USB_LOOP_WAIT_MS        10
 
-// Each index and value of STRING_LIST elements
+// Each index and value of USB_STRING_LIST elements
 #define USB_STRING_INDEX_LANGUAGE       0
 #define USB_STRING_LANGUAGE             (char[]){ 0x09, 0x04 }    // 0x0409 = English
 #define USB_STRING_INDEX_MANUFACTURER   1
@@ -23,7 +23,7 @@
 
 static const char *USB_TAG = "ble-keyboard-usb";
 
-static const char * STRING_LIST[] = {
+static const char * USB_STRING_LIST[] = {
     USB_STRING_LANGUAGE,
     USB_STRING_MANUFACTURER,
     USB_STRING_PRODUCT,
@@ -31,14 +31,14 @@ static const char * STRING_LIST[] = {
     USB_STRING_HID,
 };
 
-static const uint8_t REPORT_DESCRIPTOR_LIST[] = {
+static const uint8_t USB_REPORT_DESCRIPTOR[] = {
     TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(HID_ITF_PROTOCOL_KEYBOARD)),
     TUD_HID_REPORT_DESC_MOUSE(HID_REPORT_ID(HID_ITF_PROTOCOL_MOUSE)),
 };
 
-static const uint8_t CONFIGURATION_DESCRIPTOR_ETC_LIST[] = {
+static const uint8_t USB_CONFIGURATION_DESCRIPTOR_ETC[] = {
     TUD_CONFIG_DESCRIPTOR(1, 1, USB_STRING_INDEX_LANGUAGE, TUD_CONFIG_DESC_LEN + CFG_TUD_HID * TUD_HID_DESC_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, USB_MAX_CURRENT),
-    TUD_HID_DESCRIPTOR(0, USB_STRING_INDEX_HID, false, sizeof(REPORT_DESCRIPTOR_LIST), 0x81, USB_MAX_PACKET_LEN, USB_POLLING_MS),       // 0x81 = Number 1, IN Pipe
+    TUD_HID_DESCRIPTOR(0, USB_STRING_INDEX_HID, false, sizeof(USB_REPORT_DESCRIPTOR), 0x81, USB_MAX_PACKET_LEN, USB_POLLING_MS),       // 0x81 = Number 1, IN Pipe
 };
 
 
@@ -50,10 +50,10 @@ static const uint8_t CONFIGURATION_DESCRIPTOR_ETC_LIST[] = {
 void usb_start(void) {
     const tinyusb_config_t conf = {
         .device_descriptor = NULL,
-        .string_descriptor = STRING_LIST,
-        .string_descriptor_count = sizeof(STRING_LIST) / sizeof(STRING_LIST[0]),
+        .string_descriptor = USB_STRING_LIST,
+        .string_descriptor_count = sizeof(USB_STRING_LIST) / sizeof(USB_STRING_LIST[0]),
         .external_phy = false,
-        .configuration_descriptor = CONFIGURATION_DESCRIPTOR_ETC_LIST,
+        .configuration_descriptor = USB_CONFIGURATION_DESCRIPTOR_ETC,
         .self_powered = false,
         .vbus_monitor_io = 0,
     };
@@ -106,7 +106,7 @@ void usb_receive_keyboard_data(uint8_t led_states) {
 //
 
 uint8_t const * tud_hid_descriptor_report_cb(uint8_t instance) {
-    return REPORT_DESCRIPTOR_LIST;
+    return USB_REPORT_DESCRIPTOR;
 }
 
 uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen) {
