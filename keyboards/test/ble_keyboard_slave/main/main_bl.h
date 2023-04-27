@@ -45,7 +45,7 @@
 #define BL_LOOP_WAIT_MS                     10
 
 typedef enum {
-    BL_INDEX_CHR_BATTERY_LEVEL = 1
+    BL_INDEX_CHR_BATTERY_LEVEL = 0
     BL_INDEX_CHR_MANUFACTURER_NAME
     BL_INDEX_CHR_MODEL_NUMBER
     BL_INDEX_CHR_SERIAL_NUMBER
@@ -61,6 +61,7 @@ typedef enum {
     BL_INDEX_CHR_REPORT_MAP
     BL_INDEX_CHR_HID_INFORMATION
     BL_INDEX_CHR_HID_CONTROL_POINT
+    BL_INDEX_CHR_MAX                            // Characteristic count
     BL_INDEX_DSC_CPF_BATTERY_LEVEL
     BL_INDEX_DSC_RR_REPORT_KEYBOARD_INPUT
     BL_INDEX_DSC_RR_REPORT_MOUSE_INPUT
@@ -91,6 +92,7 @@ typedef struct {
 static const char *BL_TAG = "ble-keyboard-bl";
 
 static QueueHandle_t bl_queue_keyboard;
+static uint16_t bl_val_handle_list[BL_INDEX_CHR_MAX];
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++
 // GATT block
@@ -279,7 +281,6 @@ int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
 // Characteristics
 //
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_BATTERY_LEVEL = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_BATTERY_LEVEL),
     .access_cb = bl_data_access_cb,
@@ -298,10 +299,9 @@ static const struct ble_gatt_chr_def BL_CHR_BATTERY_LEVEL = {
     },
     .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_BATTERY_LEVEL],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_MANUFACTURER_NAME = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_MANUFACTURER_NAME),
     .access_cb = bl_data_access_cb,
@@ -309,10 +309,9 @@ static const struct ble_gatt_chr_def BL_CHR_MANUFACTURER_NAME = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_MANUFACTURER_NAME],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_MODEL_NUMBER = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_MODEL_NUMBER),
     .access_cb = bl_data_access_cb,
@@ -320,10 +319,9 @@ static const struct ble_gatt_chr_def BL_CHR_MODEL_NUMBER = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_MODEL_NUMBER],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_SERIAL_NUMBER = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_SERIAL_NUMBER),
     .access_cb = bl_data_access_cb,
@@ -331,10 +329,9 @@ static const struct ble_gatt_chr_def BL_CHR_SERIAL_NUMBER = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_SERIAL_NUMBER],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_HARDWARE_REVISION = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_HARDWARE_REVISION),
     .access_cb = bl_data_access_cb,
@@ -342,10 +339,9 @@ static const struct ble_gatt_chr_def BL_CHR_HARDWARE_REVISION = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_HARDWARE_REVISION],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_FIRMWARE_REVISION = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_FIRMWARE_REVISION),
     .access_cb = bl_data_access_cb,
@@ -353,10 +349,9 @@ static const struct ble_gatt_chr_def BL_CHR_FIRMWARE_REVISION = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_FIRMWARE_REVISION],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_SOFTWARE_REVISION = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_SOFTWARE_REVISION),
     .access_cb = bl_data_access_cb,
@@ -364,10 +359,9 @@ static const struct ble_gatt_chr_def BL_CHR_SOFTWARE_REVISION = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_SOFTWARE_REVISION],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_SYSTEM_ID = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_SYSTEM_ID),
     .access_cb = bl_data_access_cb,
@@ -375,10 +369,9 @@ static const struct ble_gatt_chr_def BL_CHR_SYSTEM_ID = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_SYSTEM_ID],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_PNP_ID = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_PNP_ID),
     .access_cb = bl_data_access_cb,
@@ -386,10 +379,9 @@ static const struct ble_gatt_chr_def BL_CHR_PNP_ID = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_PNP_ID],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_REPORT_KEYBOARD_INPUT = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT),
     .access_cb = bl_data_access_cb,
@@ -408,10 +400,9 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_KEYBOARD_INPUT = {
     },
     .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_REPORT_MOUSE_INPUT = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT),
     .access_cb = bl_data_access_cb,
@@ -430,10 +421,9 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_MOUSE_INPUT = {
     },
     .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_MOUSE_INPUT],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_REPORT_KEYBOARD_OUTPUT = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT),
     .access_cb = bl_data_access_cb,
@@ -452,10 +442,9 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_KEYBOARD_OUTPUT = {
     },
     .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_OUTPUT],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_REPORT_FEATURE = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT),
     .access_cb = bl_data_access_cb,
@@ -474,10 +463,9 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_FEATURE = {
     },
     .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_FEATURE],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_REPORT_MAP = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT_MAP),
     .access_cb = bl_data_access_cb,
@@ -496,10 +484,9 @@ static const struct ble_gatt_chr_def BL_CHR_REPORT_MAP = {
     },
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_MAP],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_HID_INFORMATION = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_HID_INFORMATION),
     .access_cb = bl_data_access_cb,
@@ -507,10 +494,9 @@ static const struct ble_gatt_chr_def BL_CHR_HID_INFORMATION = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_READ,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_HID_INFORMATION],
 }
 
-// to do: think .val_handle
 static const struct ble_gatt_chr_def BL_CHR_HID_CONTROL_POINT = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_HID_CONTROL_POINT),
     .access_cb = bl_data_access_cb,
@@ -518,7 +504,7 @@ static const struct ble_gatt_chr_def BL_CHR_HID_CONTROL_POINT = {
     .descriptors = NULL,
     .flags = BLE_GATT_CHR_F_WRITE_NO_RSP,
     .min_key_size = 0,
-    .val_handle = ???,
+    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_HID_CONTROL_POINT],
 }
 
 //
@@ -1032,6 +1018,7 @@ void bl_task_run_nimble(void *param) {
 
 void bl_start(void) {
     bl_queue_keyboard = xQueueCreate(QUEUE_LENGTH, sizeof(hid_keyboard_report_t));
+    bl_val_handle_list = {0};
 
     ESP_ERROR_CHECK(bl_initialize_nvs_flash());
     ESP_ERROR_CHECK(esp_nimble_hci_init());
@@ -1045,7 +1032,7 @@ void bl_start(void) {
 void bl_task_transmit_data(void *param) {
     task_data_t *task_data = param;
     queue_data_t data;
-    hid_keyboard_report_t bl_report_keyboard = {
+    hid_keyboard_report_t report = {
         .modifier = 0,
         .reserved = 0,
         .keycode = {0},
@@ -1064,16 +1051,22 @@ void bl_task_transmit_data(void *param) {
         }
 
         if (data.key_pressed) {
-            array_uint8_add(bl_report_keyboard.keycode, 6, data.keycode_low);
+            array_uint8_add(report.keycode, 6, data.keycode_low);
         } else {
-            array_uint8_remove(bl_report_keyboard.keycode, 6, data.keycode_low);
+            array_uint8_remove(report.keycode, 6, data.keycode_low);
         }
 
-        if (xQueueSend(bl_queue_keyboard, &bl_report_keyboard, 0) != pdTRUE) {
+        if (xQueueSend(bl_queue_keyboard, &report, 0) != pdTRUE) {
             ESP_LOGE(BL_TAG, "Send keyboard report to the queue failed");
+            continue;
         }
 
-        // to do
-        ble_gatts_notify(?conn_handle, ?chr_val_handle);
+        // to do: determine conn_handle
+        if (ble_gatts_notify(?conn_handle, bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]) != 0) {
+            ESP_LOGE(BL_TAG,
+                "Notify to report characteristic (keyboard input) failed, val_handle = %d",
+                bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]);
+            continue;
+        }
     }
 }
