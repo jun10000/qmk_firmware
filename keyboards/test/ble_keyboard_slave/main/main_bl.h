@@ -91,8 +91,14 @@ typedef struct {
 
 static const char *BL_TAG = "ble-keyboard-bl";
 
-static QueueHandle_t bl_queue_keyboard;
 static uint16_t bl_val_handle_list[BL_INDEX_CHR_MAX];
+
+static QueueHandle_t bl_queue_input;
+static QueueHandle_t bl_queue_keyboard;
+static hid_keyboard_report_t bl_report_keyboard;
+static bool bl_is_connected;
+static bool bl_is_suspended;
+static uint16_t bl_conn_handle;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++
 // GATT block
@@ -162,11 +168,11 @@ int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
         case BL_INDEX_CHR_SOFTWARE_REVISION:
             char *software_revision = "0x0100";
             return bl_mbuf_write(ctxt->om, software_revision, strlen(software_revision));
-        // to do: think later
+        // to do: think later, about system id
         case BL_INDEX_CHR_SYSTEM_ID:
             char *system_id = "esp32";
             return bl_mbuf_write(ctxt->om, system_id, strlen(system_id));
-        // to do: think later
+        // to do: think later, about PnP ID
         case BL_INDEX_CHR_PNP_ID:
             uint8_t pnp_id[] = {0x00, 0x34, 0x12, 0x78, 0x56, 0x00, 0x01};
             return bl_mbuf_write(ctxt->om, pnp_id, sizeof(pnp_id));
@@ -229,6 +235,11 @@ int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                 return hid_control_point_result;
             }
 
+            xQueueReset(bl_queue_input);
+            xQueueReset(bl_queue_keyboard);
+            bl_report_keyboard = {0};
+            bl_is_suspended = !hid_control_point;
+
             ESP_LOGI(BL_TAG, "HID Host is %s", hid_control_point ? "resumed" : "suspended");
             return 0;
         case BL_INDEX_DSC_CPF_BATTERY_LEVEL:
@@ -259,14 +270,14 @@ int bl_data_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                 .report_type = BL_VALUE_RR_REPORT_TYPE_OUTPUT,
             };
             return bl_mbuf_write(ctxt->om, &rr_report_keyboard_output, sizeof(rr_report_keyboard_output));
-        // to do: think later
+        // to do: think later, confirm report id
         case BL_INDEX_DSC_RR_REPORT_FEATURE:
             bl_dsc_rr_t rr_report_feature = {
                 .report_id = HID_ITF_PROTOCOL_NONE,
                 .report_type = BL_VALUE_RR_REPORT_TYPE_FEATURE,
             };
             return bl_mbuf_write(ctxt->om, &rr_report_feature, sizeof(rr_report_feature));
-        // to do: think later
+        // to do: think later, confirm battery level characteristic
         case BL_INDEX_DSC_ERR_REPORT_MAP:
             uint16_t err_report_map = BL_UUID_CHR_BATTERY_LEVEL;
             return bl_mbuf_write(ctxt->om, &err_report_map, 2);
@@ -575,6 +586,8 @@ static uint8_t bl_address_type;
 // User side functions 3
 //
 
+void bl_start_advertising(void);
+
 void bl_print_ble_gap_conn_desc(struct ble_gap_conn_desc *desc) {
     ESP_LOGI(BL_TAG,
         "(struct ble_gap_conn_desc) {\n"
@@ -617,30 +630,39 @@ void bl_print_ble_gap_conn_desc(struct ble_gap_conn_desc *desc) {
         desc->master_clock_accuracy);
 }
 
-void bl_start_advertising(void);
-
-// to do: think hid_clean_vars
 int bl_gap_event_connect(int status, uint16_t conn_handle) {
-    struct ble_gap_conn_desc desc;
-
-    if (status == 0) {
-        ESP_LOGI(BL_TAG, "Connection established");
-        ESP_ERROR_CHECK(ble_gap_conn_find(conn_handle, &desc));
-        bl_print_ble_gap_conn_desc(&desc);
-        // hid_clean_vars(&desc);
-    } else {
+    if (status != 0) {
         ESP_LOGE(BL_TAG, "Connection failed, status = %d", status);
         bl_start_advertising();
+        return 0;
     }
+
+    struct ble_gap_conn_desc desc;
+    ESP_ERROR_CHECK(ble_gap_conn_find(conn_handle, &desc));
+    ESP_LOGI(BL_TAG, "Connection established");
+    bl_print_ble_gap_conn_desc(&desc);
+    
+    xQueueReset(bl_queue_input);
+    xQueueReset(bl_queue_keyboard);
+    bl_report_keyboard = {0};
+    bl_is_connected = true;
+    bl_is_suspended = false;
+    bl_conn_handle = desc->conn_handle;
 
     return 0;
 }
 
-// to do: think hid_set_disconnected
 int bl_gap_event_disconnect(int reason, struct ble_gap_conn_desc *conn) {
     ESP_LOGI(BL_TAG, "Disconnected, reason = %d", reason);
     bl_print_ble_gap_conn_desc(conn);
-    // hid_set_disconnected();
+
+    xQueueReset(bl_queue_input);
+    xQueueReset(bl_queue_keyboard);
+    bl_report_keyboard = {0};
+    bl_is_connected = false;
+    bl_is_suspended = false;
+    bl_conn_handle = 0;
+
     bl_start_advertising();
     
     return 0;
@@ -715,16 +737,12 @@ int bl_gap_event_notify_tx(int status, uint16_t conn_handle, uint16_t attr_handl
     return 0;
 }
 
-// to do: think hid_set_notify
 int bl_gap_event_subscribe(uint16_t conn_handle, uint16_t attr_handle, uint8_t reason, uint8_t prev_notify,
                            uint8_t cur_notify, uint8_t prev_indicate, uint8_t cur_indicate) {
     ESP_LOGI(BL_TAG,
         "Subscribed: conn_handle = %d, attr_handle = %d, reason = %d, prev_notify = %d, "
         "cur_notify = %d, prev_indicate = %d, cur_indicate = %d",
         conn_handle, attr_handle, reason, prev_notify, cur_notify, prev_indicate, cur_indicate);
-    // hid_set_notify(event->subscribe.attr_handle,
-    //             event->subscribe.cur_notify,
-    //             event->subscribe.cur_indicate);
 
     return 0;
 }
@@ -1017,8 +1035,14 @@ void bl_task_run_nimble(void *param) {
 }
 
 void bl_start(void) {
-    bl_queue_keyboard = xQueueCreate(QUEUE_LENGTH, sizeof(hid_keyboard_report_t));
     bl_val_handle_list = {0};
+
+    bl_queue_input = NULL;
+    bl_queue_keyboard = xQueueCreate(QUEUE_LENGTH, sizeof(hid_keyboard_report_t));
+    bl_report_keyboard = {0};
+    bl_is_connected = false;
+    bl_is_suspended = false;
+    bl_conn_handle = 0;
 
     ESP_ERROR_CHECK(bl_initialize_nvs_flash());
     ESP_ERROR_CHECK(esp_nimble_hci_init());
@@ -1031,38 +1055,32 @@ void bl_start(void) {
 
 void bl_task_transmit_data(void *param) {
     task_data_t *task_data = param;
-    queue_data_t data;
-    hid_keyboard_report_t report = {
-        .modifier = 0,
-        .reserved = 0,
-        .keycode = {0},
-    };
+    bl_queue_input = task_data->queue;
 
     while (true) {
-        // to do
-        if (/* !tud_mounted() || */ uxQueueMessagesWaiting(task_data->queue) == 0) {
+        if (!bl_is_connected || bl_is_suspended || uxQueueMessagesWaiting(bl_queue_input) == 0) {
             vTaskDelay(pdMS_TO_TICKS(BL_LOOP_WAIT_MS));
             continue;
         }
 
-        if (xQueueReceive(task_data->queue, &data, 0) != pdTRUE) {
+        queue_data_t data;
+        if (xQueueReceive(bl_queue_input, &data, 0) != pdTRUE) {
             ESP_LOGE(BL_TAG, "Receive data from the queue failed");
             continue;
         }
 
         if (data.key_pressed) {
-            array_uint8_add(report.keycode, 6, data.keycode_low);
+            array_uint8_add(bl_report_keyboard.keycode, 6, data.keycode_low);
         } else {
-            array_uint8_remove(report.keycode, 6, data.keycode_low);
+            array_uint8_remove(bl_report_keyboard.keycode, 6, data.keycode_low);
         }
 
-        if (xQueueSend(bl_queue_keyboard, &report, 0) != pdTRUE) {
+        if (xQueueSend(bl_queue_keyboard, &bl_report_keyboard, 0) != pdTRUE) {
             ESP_LOGE(BL_TAG, "Send keyboard report to the queue failed");
             continue;
         }
 
-        // to do: determine conn_handle
-        if (ble_gatts_notify(?conn_handle, bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]) != 0) {
+        if (ble_gatts_notify(bl_conn_handle, bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]) != 0) {
             ESP_LOGE(BL_TAG,
                 "Notify to report characteristic (keyboard input) failed, val_handle = %d",
                 bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]);
