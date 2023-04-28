@@ -3,7 +3,6 @@
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "nvs_flash.h"
-#include "esp_nimble_hci.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 #include "host/ble_hs.h"
@@ -575,7 +574,7 @@ static const struct ble_gatt_svc_def BL_SERVICE_DIS = {
     .characteristics = BL_DIS_CHARACTERISTICS,
 };
 
-static const struct ble_gatt_svc_def * BL_INCLUDE_SERVICES[] = {
+static const struct ble_gatt_svc_def * BL_INCLUDE_SERVICE_PTRS[] = {
     &BL_SERVICE_BAS,
     &BL_SERVICE_DIS,
     NULL,
@@ -584,11 +583,13 @@ static const struct ble_gatt_svc_def * BL_INCLUDE_SERVICES[] = {
 static const struct ble_gatt_svc_def BL_SERVICE_HID = {
     .type = BLE_GATT_SVC_TYPE_PRIMARY,
     .uuid = BLE_UUID16_DECLARE(BL_UUID_SERVICE_HID),
-    .includes = BL_INCLUDE_SERVICES,
+    .includes = BL_INCLUDE_SERVICE_PTRS,
     .characteristics = BL_HID_CHARACTERISTICS,
 };
 
 static const struct ble_gatt_svc_def BL_SERVICES[] = {
+    BL_SERVICE_BAS,
+    BL_SERVICE_DIS,
     BL_SERVICE_HID,
     {0},
 };
@@ -1064,7 +1065,6 @@ void bl_start(void) {
     bl_conn_handle = 0;
 
     ESP_ERROR_CHECK(bl_initialize_nvs_flash());
-    ESP_ERROR_CHECK(esp_nimble_hci_init());
     ESP_ERROR_CHECK(nimble_port_init());
     bl_initialize_ble_hs_cfg();
     ESP_ERROR_CHECK(bl_initialize_gatt_server());
