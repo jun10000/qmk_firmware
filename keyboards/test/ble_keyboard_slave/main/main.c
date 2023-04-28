@@ -27,6 +27,8 @@ typedef struct {
     QueueHandle_t queue;
 } task_data_t;
 
+static const char *TAG = "ble-keyboard";
+
 #if IFM_INPUT_USE == IFM_INPUT_I2C
     #include "main_i2c.h"
 #elif IFM_INPUT_USE == IFM_INPUT_SPI
@@ -39,8 +41,6 @@ typedef struct {
 #elif IFM_OUTPUT_USE == IFM_OUTPUT_BL
     #include "main_bl.h"
 #endif
-
-static const char *TAG = "ble-keyboard";
 
 
 

@@ -35,6 +35,11 @@
         "bitset": "c",
         "initializer_list": "c",
         "main_usb.h": "c",
-        "utility_led.h": "c"
+        "utility_led.h": "c",
+        "esp_mac.h": "c",
+        "util.h": "c",
+        "ble_svc_gatt.h": "c",
+        "nimble_port_freertos.h": "c",
+        "ble_store_config_priv.h": "c"
     }
 }
