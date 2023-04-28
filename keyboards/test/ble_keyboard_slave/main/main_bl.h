@@ -47,7 +47,6 @@ extern void ble_store_config_init(void);
 #define BL_VALUE_RR_REPORT_TYPE_OUTPUT      0x02
 #define BL_VALUE_RR_REPORT_TYPE_FEATURE     0x03
 
-#define BL_ADVERTISING_INTERVAL_MS          40          // min: 20
 #define BL_LOOP_WAIT_MS                     10
 
 typedef enum {
@@ -574,16 +573,10 @@ static const struct ble_gatt_svc_def BL_SERVICE_DIS = {
     .characteristics = BL_DIS_CHARACTERISTICS,
 };
 
-static const struct ble_gatt_svc_def * BL_INCLUDE_SERVICE_PTRS[] = {
-    &BL_SERVICE_BAS,
-    &BL_SERVICE_DIS,
-    NULL,
-};
-
 static const struct ble_gatt_svc_def BL_SERVICE_HID = {
     .type = BLE_GATT_SVC_TYPE_PRIMARY,
     .uuid = BLE_UUID16_DECLARE(BL_UUID_SERVICE_HID),
-    .includes = BL_INCLUDE_SERVICE_PTRS,
+    .includes = NULL,
     .characteristics = BL_HID_CHARACTERISTICS,
 };
 
@@ -890,10 +883,10 @@ void bl_start_advertising(void) {
         .svc_data_uuid16_len = 0,
         .public_tgt_addr = NULL,
         .num_public_tgt_addrs = 0,
-        .appearance = BL_VALUE_APPEARANCE_KEYBOARD,
-        .appearance_is_present = 1,
-        .adv_itvl = BL_ADVERTISING_INTERVAL_MS,
-        .adv_itvl_is_present = 1,
+        .appearance = 0,
+        .appearance_is_present = 0,
+        .adv_itvl = 0,
+        .adv_itvl_is_present = 0,
         .svc_data_uuid32 = NULL,
         .svc_data_uuid32_len = 0,
         .svc_data_uuid128 = NULL,
@@ -964,9 +957,9 @@ void ble_hs_cfg_reset_cb(int reason) {
 }
 
 void ble_hs_cfg_sync_cb(void) {
-    ESP_ERROR_CHECK(ble_hs_util_ensure_addr(1));
+    ESP_ERROR_CHECK(ble_hs_util_ensure_addr(0));
 
-    int result = ble_hs_id_infer_auto(1, &bl_address_type);
+    int result = ble_hs_id_infer_auto(0, &bl_address_type);
     if (result != 0) {
         ESP_LOGE(BL_TAG, "Determine address type failed, result = %d", result);
         return;
@@ -1012,8 +1005,11 @@ void bl_initialize_ble_hs_cfg(void) {
     ble_hs_cfg.sm_mitm = 1;
     ble_hs_cfg.sm_sc = 1;
     ble_hs_cfg.sm_keypress = 0;
-    ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ID | BLE_SM_PAIR_KEY_DIST_SIGN;
-    ble_hs_cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ID | BLE_SM_PAIR_KEY_DIST_SIGN;
+
+    // to do: think later
+    ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
+    ble_hs_cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
+
     ble_hs_cfg.reset_cb = ble_hs_cfg_reset_cb;
     ble_hs_cfg.sync_cb = ble_hs_cfg_sync_cb;
 
