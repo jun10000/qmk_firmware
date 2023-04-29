@@ -58,16 +58,15 @@ void usb_start(void) {
 }
 
 void usb_task_transmit_data(void *param) {
-    task_data_t *task_data = param;
     queue_data_t data;
 
     while (true) {
-        if (!tud_mounted() || uxQueueMessagesWaiting(task_data->queue) == 0) {
+        if (!tud_mounted() || uxQueueMessagesWaiting(queue_input) == 0) {
             vTaskDelay(pdMS_TO_TICKS(USB_LOOP_WAIT_MS));
             continue;
         }
 
-        if (xQueueReceive(task_data->queue, &data, 0) != pdTRUE) {
+        if (xQueueReceive(queue_input, &data, 0) != pdTRUE) {
             ESP_LOGE(USB_TAG, "Receive data from the queue failed");
             continue;
         }

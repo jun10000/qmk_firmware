@@ -40,7 +40,6 @@ void spi_start(void) {
 }
 
 void spi_task_receive_data(void *param) {
-    task_data_t *task_data = param;
     uint8_t data[SPI_DATA_LENGTH];
     spi_slave_transaction_t *trans_receive;
 
@@ -70,7 +69,7 @@ void spi_task_receive_data(void *param) {
             .key_pressed = data[2],
         };
 
-        if (xQueueSend(task_data->queue, &qdata, 0) != pdTRUE) {
+        if (xQueueSend(queue_input, &qdata, 0) != pdTRUE) {
             ESP_LOGE(SPI_TAG, "Send data to the queue failed");
         }
     }

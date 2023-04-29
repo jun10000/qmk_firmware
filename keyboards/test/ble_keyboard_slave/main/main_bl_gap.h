@@ -14,7 +14,7 @@ int bl_gap_event_connect(int status, uint16_t conn_handle) {
     ESP_LOGI(BL_TAG, "Connection established");
     nimble_print_ble_gap_conn_desc(&desc);
     
-    xQueueReset(bl_queue_input);
+    xQueueReset(queue_input);
     xQueueReset(bl_queue_keyboard);
     memset(&bl_report_keyboard, 0, sizeof(bl_report_keyboard));
     bl_is_connected = true;
@@ -28,7 +28,7 @@ int bl_gap_event_disconnect(int reason, struct ble_gap_conn_desc *conn) {
     ESP_LOGI(BL_TAG, "Disconnected, reason = %d", reason);
     nimble_print_ble_gap_conn_desc(conn);
 
-    xQueueReset(bl_queue_input);
+    xQueueReset(queue_input);
     xQueueReset(bl_queue_keyboard);
     memset(&bl_report_keyboard, 0, sizeof(bl_report_keyboard));
     bl_is_connected = false;

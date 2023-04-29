@@ -87,12 +87,13 @@ static const char *BL_TAG = "ble-keyboard-bl";
 static uint8_t bl_address_type;
 static uint16_t bl_val_handle_list[BL_INDEX_CHR_MAX];
 
-static QueueHandle_t bl_queue_input;
 static QueueHandle_t bl_queue_keyboard;
 static hid_keyboard_report_t bl_report_keyboard;
 static bool bl_is_connected;
 static bool bl_is_suspended;
 static uint16_t bl_conn_handle;
+
+
 
 #include "main_bl_gatt.h"
 #include "main_bl_gap.h"
@@ -230,7 +231,6 @@ void bl_task_run_nimble(void *param) {
 void bl_start(void) {
     memset(bl_val_handle_list, 0, sizeof(bl_val_handle_list));
 
-    bl_queue_input = NULL;
     bl_queue_keyboard = xQueueCreate(QUEUE_LENGTH, sizeof(hid_keyboard_report_t));
     memset(&bl_report_keyboard, 0, sizeof(bl_report_keyboard));
     bl_is_connected = false;
@@ -246,17 +246,14 @@ void bl_start(void) {
 }
 
 void bl_task_transmit_data(void *param) {
-    task_data_t *task_data = param;
-    bl_queue_input = task_data->queue;
-
     while (true) {
-        if (!bl_is_connected || bl_is_suspended || uxQueueMessagesWaiting(bl_queue_input) == 0) {
+        if (!bl_is_connected || bl_is_suspended || uxQueueMessagesWaiting(queue_input) == 0) {
             vTaskDelay(pdMS_TO_TICKS(BL_LOOP_WAIT_MS));
             continue;
         }
 
         queue_data_t data;
-        if (xQueueReceive(bl_queue_input, &data, 0) != pdTRUE) {
+        if (xQueueReceive(queue_input, &data, 0) != pdTRUE) {
             ESP_LOGE(BL_TAG, "Receive data from the queue failed");
             continue;
         }

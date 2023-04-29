@@ -103,7 +103,7 @@ int bl_gatt_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                 return hid_control_point_result;
             }
 
-            xQueueReset(bl_queue_input);
+            xQueueReset(queue_input);
             xQueueReset(bl_queue_keyboard);
             memset(&bl_report_keyboard, 0, sizeof(bl_report_keyboard));
             bl_is_suspended = !hid_control_point;

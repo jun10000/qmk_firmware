@@ -28,7 +28,7 @@
 
 #define IFM_INPUT_USE           IFM_INPUT_UART
 #define IFM_OUTPUT_USE          IFM_OUTPUT_BL
-#define TASK_STACK_SIZE         (4 * 1024)
+#define TASK_STACK_SIZE         4096
 #define TASK_PRIORITY_INPUT     17
 #define TASK_PRIORITY_OUTPUT    16
 #define QUEUE_LENGTH            10
@@ -40,11 +40,11 @@ typedef struct {
     bool key_pressed;
 } queue_data_t;
 
-typedef struct {
-    QueueHandle_t queue;
-} task_data_t;
-
 static const char *TAG = "ble-keyboard";
+
+static QueueHandle_t queue_input;
+
+
 
 #if IFM_INPUT_USE == IFM_INPUT_I2C
     #include "main_i2c.h"
@@ -62,6 +62,14 @@ static const char *TAG = "ble-keyboard";
 
 void app_main(void)
 {
+
+//--------------------------------------------------
+// Initialize variables
+//--------------------------------------------------
+
+    queue_input = xQueueCreate(QUEUE_LENGTH, sizeof(queue_data_t));
+    ESP_ERROR_CHECK(queue_input == 0);
+    ESP_LOGI(TAG, "Initialize variables finished");
 
 //--------------------------------------------------
 // Initialize input interface
@@ -88,26 +96,16 @@ void app_main(void)
     ESP_LOGI(TAG, "Initialize output interface finished");
 
 //--------------------------------------------------
-// Initialize task data
-//--------------------------------------------------
-
-    task_data_t task_data = {
-        .queue = xQueueCreate(QUEUE_LENGTH, sizeof(queue_data_t)),
-    };
-    ESP_ERROR_CHECK(task_data.queue == 0);
-    ESP_LOGI(TAG, "Initialize task data finished");
-
-//--------------------------------------------------
 // Create input task
 //--------------------------------------------------
 
     TaskHandle_t task_input;
 #if IFM_INPUT_USE == IFM_INPUT_I2C
-    xTaskCreate(i2c_task_receive_data, "i2c_task_receive_data", TASK_STACK_SIZE, &task_data, TASK_PRIORITY_INPUT, &task_input);
+    xTaskCreate(i2c_task_receive_data, "i2c_task_receive_data", TASK_STACK_SIZE, NULL, TASK_PRIORITY_INPUT, &task_input);
 #elif IFM_INPUT_USE == IFM_INPUT_SPI
-    xTaskCreate(spi_task_receive_data, "spi_task_receive_data", TASK_STACK_SIZE, &task_data, TASK_PRIORITY_INPUT, &task_input);
+    xTaskCreate(spi_task_receive_data, "spi_task_receive_data", TASK_STACK_SIZE, NULL, TASK_PRIORITY_INPUT, &task_input);
 #elif IFM_INPUT_USE == IFM_INPUT_UART
-    xTaskCreate(uart_task_receive_data, "uart_task_receive_data", TASK_STACK_SIZE, &task_data, TASK_PRIORITY_INPUT, &task_input);
+    xTaskCreate(uart_task_receive_data, "uart_task_receive_data", TASK_STACK_SIZE, NULL, TASK_PRIORITY_INPUT, &task_input);
 #endif
     ESP_ERROR_CHECK(task_input == NULL);
     ESP_LOGI(TAG, "Input task created");
@@ -118,9 +116,9 @@ void app_main(void)
 
     TaskHandle_t task_output;
 #if IFM_OUTPUT_USE == IFM_OUTPUT_USB
-    xTaskCreate(usb_task_transmit_data, "usb_task_transmit_data", TASK_STACK_SIZE, &task_data, TASK_PRIORITY_OUTPUT, &task_output);
+    xTaskCreate(usb_task_transmit_data, "usb_task_transmit_data", TASK_STACK_SIZE, NULL, TASK_PRIORITY_OUTPUT, &task_output);
 #elif IFM_OUTPUT_USE == IFM_OUTPUT_BL
-    xTaskCreate(bl_task_transmit_data, "bl_task_transmit_data", TASK_STACK_SIZE, &task_data, TASK_PRIORITY_OUTPUT, &task_output);
+    xTaskCreate(bl_task_transmit_data, "bl_task_transmit_data", TASK_STACK_SIZE, NULL, TASK_PRIORITY_OUTPUT, &task_output);
 #endif
     ESP_ERROR_CHECK(task_output == NULL);
     ESP_LOGI(TAG, "Output task created");
