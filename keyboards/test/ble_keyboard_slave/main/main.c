@@ -1,6 +1,23 @@
+#include <string.h>
 #include "esp_log.h"
+#include "esp_mac.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include "driver/i2c.h"
+#include "driver/spi_slave.h"
+#include "driver/uart.h"
+#include "led_strip.h"
+#include "tinyusb.h"
+#include "nvs_flash.h"
+#include "nimble/nimble_port.h"
+#include "nimble/nimble_port_freertos.h"
+#include "host/ble_hs.h"
+#include "host/util/util.h"
+#include "services/gap/ble_svc_gap.h"
+#include "services/gatt/ble_svc_gatt.h"
+
+#include "utility.h"
+#include "utility_led.h"
 
 // Interface method
 #define IFM_INPUT_I2C           1       // I2C
@@ -36,9 +53,8 @@ static const char *TAG = "ble-keyboard";
 #elif IFM_INPUT_USE == IFM_INPUT_UART
     #include "main_uart.h"
 #endif
-#if IFM_OUTPUT_USE == IFM_OUTPUT_USB
-    #include "main_usb.h"
-#elif IFM_OUTPUT_USE == IFM_OUTPUT_BL
+#include "main_usb.h"
+#if IFM_OUTPUT_USE == IFM_OUTPUT_BL
     #include "main_bl.h"
 #endif
 

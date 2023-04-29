@@ -1,7 +1,5 @@
 #pragma once
 
-#include "led_strip.h"
-
 #define LED_PIN         48
 #define LED_RES_FREQ    (10 * 1000 * 1000)
 #define LED_COLOR       255, 255, 255

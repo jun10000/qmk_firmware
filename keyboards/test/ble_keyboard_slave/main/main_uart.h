@@ -1,10 +1,5 @@
 #pragma once
 
-#include <string.h>
-#include "esp_log.h"
-#include "driver/uart.h"
-#include "utility.h"
-
 #define UART_PORT           UART_NUM_1
 #define UART_PIN_TX         17
 #define UART_PIN_RX         18
@@ -65,7 +60,6 @@ void uart_task_receive_data(void *param) {
             .key_pressed = data[2],
         };
 
-        print_input_data(UART_TAG, &qdata);
         if (xQueueSend(task_data->queue, &qdata, 0) != pdTRUE) {
             ESP_LOGE(UART_TAG, "Send data to the queue failed");
         }

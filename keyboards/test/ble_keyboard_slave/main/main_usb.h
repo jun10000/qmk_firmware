@@ -1,9 +1,5 @@
 #pragma once
 
-#include "esp_log.h"
-#include "tinyusb.h"
-#include "utility_led.h"
-
 #define USB_MAX_CURRENT         100
 #define USB_MAX_PACKET_LEN      16
 #define USB_POLLING_MS          10

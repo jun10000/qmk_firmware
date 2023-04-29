@@ -1,9 +1,5 @@
 #pragma once
 
-#include "esp_log.h"
-#include "driver/i2c.h"
-#include "utility.h"
-
 #define I2C_PORT            I2C_NUM_0
 #define I2C_PIN_SCL         0
 #define I2C_PIN_SDA         1
@@ -59,7 +55,6 @@ void i2c_task_receive_data(void *param) {
                 .key_pressed = data[i + 3],
             };
 
-            print_input_data(I2C_TAG, &qdata);
             if (xQueueSend(task_data->queue, &qdata, 0) != pdTRUE) {
                 ESP_LOGE(I2C_TAG, "Send data to the queue failed");
             }

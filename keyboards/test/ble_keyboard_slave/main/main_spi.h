@@ -1,10 +1,5 @@
 #pragma once
 
-#include <string.h>
-#include "esp_log.h"
-#include "driver/spi_slave.h"
-#include "utility.h"
-
 #define SPI_PORT            SPI2_HOST
 #define SPI_PIN_CS          10
 #define SPI_PIN_SCLK        12
@@ -75,7 +70,6 @@ void spi_task_receive_data(void *param) {
             .key_pressed = data[2],
         };
 
-        print_input_data(SPI_TAG, &qdata);
         if (xQueueSend(task_data->queue, &qdata, 0) != pdTRUE) {
             ESP_LOGE(SPI_TAG, "Send data to the queue failed");
         }
