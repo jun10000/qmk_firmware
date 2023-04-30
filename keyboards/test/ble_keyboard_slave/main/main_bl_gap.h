@@ -203,6 +203,7 @@ int ble_gap_event_cb(struct ble_gap_event *event, void *arg) {
     return 0;
 }
 
+// to do: think timing of advertising (security risk)
 void bl_gap_start_advertising(void) {
     ble_uuid16_t uuids[] = {
         BLE_UUID16_INIT(BL_UUID_SERVICE_HID),

@@ -160,6 +160,10 @@ int bl_gatt_access_cb(uint16_t conn_handle, uint16_t attr_handle,
 // Characteristics
 //
 
+// to do:
+// Chr -> add indicate?
+// dsc -> add encrypt?
+
 static const struct ble_gatt_chr_def BL_GATT_CHR_BATTERY_LEVEL = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_BATTERY_LEVEL),
     .access_cb = bl_gatt_access_cb,

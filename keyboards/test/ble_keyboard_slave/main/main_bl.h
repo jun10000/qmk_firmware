@@ -180,14 +180,11 @@ void bl_initialize_ble_hs_cfg(void) {
     ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_NO_IO;
     ble_hs_cfg.sm_oob_data_flag = 0;
     ble_hs_cfg.sm_bonding = 1;
-    ble_hs_cfg.sm_mitm = 1;
-    ble_hs_cfg.sm_sc = 1;
+    ble_hs_cfg.sm_mitm = 0;
+    ble_hs_cfg.sm_sc = 0;
     ble_hs_cfg.sm_keypress = 0;
-
-    // to do: think later
     ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     ble_hs_cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
-
     ble_hs_cfg.reset_cb = ble_hs_cfg_reset_cb;
     ble_hs_cfg.sync_cb = ble_hs_cfg_sync_cb;
 
@@ -269,6 +266,7 @@ void bl_task_transmit_data(void *param) {
             continue;
         }
 
+        // to do: think indicate?
         if (ble_gatts_notify(bl_conn_handle, bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]) != 0) {
             ESP_LOGE(BL_TAG,
                 "Notify to report characteristic (keyboard input) failed, val_handle = %d",
