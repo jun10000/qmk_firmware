@@ -4,6 +4,10 @@ extern void ble_store_config_init(void);
 
 #define BL_F_CHR_HIDI_REMOTE_WAKE               1
 #define BL_F_CHR_HIDI_NORMALLY_CONNECTABLE      2
+#define BL_F_CHR_READ                           (BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC)
+#define BL_F_CHR_WRITE                          (BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_ENC)
+#define BL_F_DSC_READ                           (BLE_ATT_F_READ | BLE_ATT_F_READ_ENC)
+#define BL_F_DSC_WRITE                          (BLE_ATT_F_WRITE | BLE_ATT_F_WRITE_ENC)
 
 #define BL_UUID_SERVICE_BAS                 0x180F      // Battery Service
 #define BL_UUID_SERVICE_DIS                 0x180A      // Device Information Service
@@ -266,7 +270,6 @@ void bl_task_transmit_data(void *param) {
             continue;
         }
 
-        // to do: think indicate?
         if (ble_gatts_notify(bl_conn_handle, bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]) != 0) {
             ESP_LOGE(BL_TAG,
                 "Notify to report characteristic (keyboard input) failed, val_handle = %d",

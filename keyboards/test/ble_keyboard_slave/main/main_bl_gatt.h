@@ -160,10 +160,6 @@ int bl_gatt_access_cb(uint16_t conn_handle, uint16_t attr_handle,
 // Characteristics
 //
 
-// to do:
-// Chr -> add indicate?
-// dsc -> add encrypt?
-
 static const struct ble_gatt_chr_def BL_GATT_CHR_BATTERY_LEVEL = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_BATTERY_LEVEL),
     .access_cb = bl_gatt_access_cb,
@@ -171,7 +167,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_BATTERY_LEVEL = {
     .descriptors = (struct ble_gatt_dsc_def[]){
         {
             .uuid = BLE_UUID16_DECLARE(BL_UUID_DSC_CPF),
-            .att_flags = BLE_ATT_F_READ,
+            .att_flags = BL_F_DSC_READ,
             .min_key_size = 0,
             .access_cb = bl_gatt_access_cb,
             .arg = (void *)BL_INDEX_DSC_CPF_BATTERY_LEVEL,
@@ -180,7 +176,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_BATTERY_LEVEL = {
             0,
         },
     },
-    .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+    .flags = BL_F_CHR_READ | BLE_GATT_CHR_F_NOTIFY,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_BATTERY_LEVEL],
 };
@@ -190,7 +186,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_MANUFACTURER_NAME = {
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_MANUFACTURER_NAME,
     .descriptors = NULL,
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_MANUFACTURER_NAME],
 };
@@ -200,7 +196,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_MODEL_NUMBER = {
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_MODEL_NUMBER,
     .descriptors = NULL,
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_MODEL_NUMBER],
 };
@@ -210,7 +206,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_SERIAL_NUMBER = {
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_SERIAL_NUMBER,
     .descriptors = NULL,
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_SERIAL_NUMBER],
 };
@@ -220,7 +216,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_HARDWARE_REVISION = {
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_HARDWARE_REVISION,
     .descriptors = NULL,
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_HARDWARE_REVISION],
 };
@@ -230,7 +226,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_FIRMWARE_REVISION = {
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_FIRMWARE_REVISION,
     .descriptors = NULL,
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_FIRMWARE_REVISION],
 };
@@ -240,7 +236,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_SOFTWARE_REVISION = {
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_SOFTWARE_REVISION,
     .descriptors = NULL,
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_SOFTWARE_REVISION],
 };
@@ -250,7 +246,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_SYSTEM_ID = {
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_SYSTEM_ID,
     .descriptors = NULL,
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_SYSTEM_ID],
 };
@@ -260,7 +256,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_PNP_ID = {
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_PNP_ID,
     .descriptors = NULL,
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_PNP_ID],
 };
@@ -272,7 +268,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_KEYBOARD_INPUT = {
     .descriptors = (struct ble_gatt_dsc_def[]){
         {
             .uuid = BLE_UUID16_DECLARE(BL_UUID_DSC_RR),
-            .att_flags = BLE_ATT_F_READ,
+            .att_flags = BL_F_DSC_READ,
             .min_key_size = 0,
             .access_cb = bl_gatt_access_cb,
             .arg = (void *)BL_INDEX_DSC_RR_REPORT_KEYBOARD_INPUT,
@@ -281,7 +277,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_KEYBOARD_INPUT = {
             0,
         },
     },
-    .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+    .flags = BL_F_CHR_READ | BLE_GATT_CHR_F_NOTIFY,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT],
 };
@@ -293,7 +289,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_MOUSE_INPUT = {
     .descriptors = (struct ble_gatt_dsc_def[]){
         {
             .uuid = BLE_UUID16_DECLARE(BL_UUID_DSC_RR),
-            .att_flags = BLE_ATT_F_READ,
+            .att_flags = BL_F_DSC_READ,
             .min_key_size = 0,
             .access_cb = bl_gatt_access_cb,
             .arg = (void *)BL_INDEX_DSC_RR_REPORT_MOUSE_INPUT,
@@ -302,7 +298,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_MOUSE_INPUT = {
             0,
         },
     },
-    .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+    .flags = BL_F_CHR_READ | BLE_GATT_CHR_F_NOTIFY,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_MOUSE_INPUT],
 };
@@ -314,7 +310,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_KEYBOARD_OUTPUT = {
     .descriptors = (struct ble_gatt_dsc_def[]){
         {
             .uuid = BLE_UUID16_DECLARE(BL_UUID_DSC_RR),
-            .att_flags = BLE_ATT_F_READ,
+            .att_flags = BL_F_DSC_READ,
             .min_key_size = 0,
             .access_cb = bl_gatt_access_cb,
             .arg = (void *)BL_INDEX_DSC_RR_REPORT_KEYBOARD_OUTPUT,
@@ -323,7 +319,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_KEYBOARD_OUTPUT = {
             0,
         },
     },
-    .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
+    .flags = BL_F_CHR_READ | BL_F_CHR_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_OUTPUT],
 };
@@ -335,7 +331,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_FEATURE = {
     .descriptors = (struct ble_gatt_dsc_def[]){
         {
             .uuid = BLE_UUID16_DECLARE(BL_UUID_DSC_RR),
-            .att_flags = BLE_ATT_F_READ,
+            .att_flags = BL_F_DSC_READ,
             .min_key_size = 0,
             .access_cb = bl_gatt_access_cb,
             .arg = (void *)BL_INDEX_DSC_RR_REPORT_FEATURE,
@@ -344,7 +340,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_FEATURE = {
             0,
         },
     },
-    .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE,
+    .flags = BL_F_CHR_READ | BL_F_CHR_WRITE,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_FEATURE],
 };
@@ -356,7 +352,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_MAP = {
     .descriptors = (struct ble_gatt_dsc_def[]){
         {
             .uuid = BLE_UUID16_DECLARE(BL_UUID_DSC_ERR),
-            .att_flags = BLE_ATT_F_READ,
+            .att_flags = BL_F_DSC_READ,
             .min_key_size = 0,
             .access_cb = bl_gatt_access_cb,
             .arg = (void *)BL_INDEX_DSC_ERR_REPORT_MAP,
@@ -365,7 +361,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_MAP = {
             0,
         },
     },
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_MAP],
 };
@@ -375,7 +371,7 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_HID_INFORMATION = {
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_HID_INFORMATION,
     .descriptors = NULL,
-    .flags = BLE_GATT_CHR_F_READ,
+    .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_HID_INFORMATION],
 };
