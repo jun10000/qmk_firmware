@@ -4,7 +4,7 @@ void bl_gap_start_advertising(void);
 
 int bl_gap_event_connect(int status, uint16_t conn_handle) {
     if (status != 0) {
-        ESP_LOGE(BL_TAG, "Connection failed, status = %d", status);
+        ESP_LOGE(BL_TAG, "Connection failed, status = 0x%x", status);
         bl_gap_start_advertising();
         return 0;
     }
@@ -25,7 +25,7 @@ int bl_gap_event_connect(int status, uint16_t conn_handle) {
 }
 
 int bl_gap_event_disconnect(int reason, struct ble_gap_conn_desc *conn) {
-    ESP_LOGI(BL_TAG, "Disconnected, reason = %d", reason);
+    ESP_LOGI(BL_TAG, "Disconnected, reason = 0x%x", reason);
     nimble_print_ble_gap_conn_desc(conn);
 
     xQueueReset(queue_input);
@@ -43,7 +43,7 @@ int bl_gap_event_disconnect(int reason, struct ble_gap_conn_desc *conn) {
 int bl_gap_event_conn_update(int status, uint16_t conn_handle) {
     struct ble_gap_conn_desc desc;
 
-    ESP_LOGI(BL_TAG, "Connection updated, status = %d", status);
+    ESP_LOGI(BL_TAG, "Connection updated, status = 0x%x", status);
     ESP_ERROR_CHECK(ble_gap_conn_find(conn_handle, &desc));
     nimble_print_ble_gap_conn_desc(&desc);
 
@@ -58,7 +58,7 @@ int bl_gap_event_conn_update_req(const struct ble_gap_upd_params *peer_params,
 }
 
 int bl_gap_event_adv_complete(int reason) {
-    ESP_LOGI(BL_TAG, "Advertise completed, reason = %d", reason);
+    ESP_LOGI(BL_TAG, "Advertise completed, reason = 0x%x", reason);
     bl_gap_start_advertising();
 
     return 0;
@@ -67,7 +67,7 @@ int bl_gap_event_adv_complete(int reason) {
 int bl_gap_event_enc_change(int status, uint16_t conn_handle) {
     struct ble_gap_conn_desc desc;
 
-    ESP_LOGI(BL_TAG, "Encryption changed, status = %d", status);
+    ESP_LOGI(BL_TAG, "Encryption changed, status = 0x%x", status);
     ESP_ERROR_CHECK(ble_gap_conn_find(conn_handle, &desc));
     nimble_print_ble_gap_conn_desc(&desc);
 
@@ -91,7 +91,7 @@ int bl_gap_event_passkey_action(struct ble_gap_passkey_params *params, uint16_t 
         // case BLE_SM_IOACT_OOB_SC:
         //     break;
         default:
-            ESP_LOGE(BL_TAG, "Detected bonding is not supported, action = %d", params->action);
+            ESP_LOGE(BL_TAG, "Detected bonding is not supported, action = 0x%x", params->action);
             break;
     }
 
@@ -103,7 +103,7 @@ int bl_gap_event_passkey_action(struct ble_gap_passkey_params *params, uint16_t 
 int bl_gap_event_notify_tx(int status, uint16_t conn_handle, uint16_t attr_handle, uint8_t indication) {
     ESP_LOGI(BL_TAG,
         "TX notification / indication received, "
-        "status = %d, conn_handle = %d, attr_handle = %d, indication = %d",
+        "status = 0x%x, conn_handle = 0x%x, attr_handle = 0x%x, indication = 0x%x",
         status, conn_handle, attr_handle, indication);
     
     return 0;
@@ -112,15 +112,15 @@ int bl_gap_event_notify_tx(int status, uint16_t conn_handle, uint16_t attr_handl
 int bl_gap_event_subscribe(uint16_t conn_handle, uint16_t attr_handle, uint8_t reason, uint8_t prev_notify,
                            uint8_t cur_notify, uint8_t prev_indicate, uint8_t cur_indicate) {
     ESP_LOGI(BL_TAG,
-        "Subscribed: conn_handle = %d, attr_handle = %d, reason = %d, prev_notify = %d, "
-        "cur_notify = %d, prev_indicate = %d, cur_indicate = %d",
+        "Subscribed: conn_handle = 0x%x, attr_handle = 0x%x, reason = 0x%x, prev_notify = 0x%x, "
+        "cur_notify = 0x%x, prev_indicate = 0x%x, cur_indicate = 0x%x",
         conn_handle, attr_handle, reason, prev_notify, cur_notify, prev_indicate, cur_indicate);
 
     return 0;
 }
 
 int bl_gap_event_mtu(uint16_t conn_handle, uint16_t channel_id, uint16_t value) {
-    ESP_LOGI(BL_TAG, "MTU updated, conn_handle = %d, channel_id = %d, value = %d",
+    ESP_LOGI(BL_TAG, "MTU updated, conn_handle = 0x%x, channel_id = 0x%x, value = %d",
         conn_handle, channel_id, value);
     
     return 0;
@@ -196,7 +196,7 @@ int ble_gap_event_cb(struct ble_gap_event *event, void *arg) {
         // case BLE_GAP_EVENT_SUBRATE_CHANGE:
         //     break;
         default:
-            ESP_LOGI(BL_TAG, "Other GAP event is occured, type = %d", event->type);
+            ESP_LOGI(BL_TAG, "Other GAP event is occured, type = 0x%x", event->type);
             break;
     }
 
@@ -257,13 +257,13 @@ void bl_gap_start_advertising(void) {
 
     int result = ble_gap_adv_set_fields(&fields);
     if (result != 0) {
-        ESP_LOGE(BL_TAG, "Set advertisement data failed, result = %d", result);
+        ESP_LOGE(BL_TAG, "Set advertisement data failed, result = 0x%x", result);
         return;
     }
 
     result = ble_gap_adv_start(bl_address_type, NULL, BLE_HS_FOREVER, &params, ble_gap_event_cb, NULL);
     if (result != 0) {
-        ESP_LOGE(BL_TAG, "Start advertising failed, result = %d", result);
+        ESP_LOGE(BL_TAG, "Start advertising failed, result = 0x%x", result);
         return;
     }
 }

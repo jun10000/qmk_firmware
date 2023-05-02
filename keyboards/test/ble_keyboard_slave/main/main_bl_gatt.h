@@ -9,7 +9,7 @@ int bl_gatt_access_cb(uint16_t conn_handle, uint16_t attr_handle,
     uint16_t uuid = ble_uuid_u16(is_descriptor ? ctxt->dsc->uuid : ctxt->chr->uuid);
     int index = (int)arg;
 
-    ESP_LOGI(BL_TAG, "%s %s access occured, uuid = %04X, index = %d, attr_handle = %d",
+    ESP_LOGI(BL_TAG, "%s %s access occured, uuid = %04X, index = 0x%x, attr_handle = 0x%x",
         is_descriptor ? "Descriptor" : "Characteristic",
         is_read ? "read" : "write",
         uuid, index, attr_handle);
@@ -19,31 +19,17 @@ int bl_gatt_access_cb(uint16_t conn_handle, uint16_t attr_handle,
             uint8_t battery_level = 80;
             return nimble_mbuf_write(ctxt->om, &battery_level, 1);
         case BL_INDEX_CHR_MANUFACTURER_NAME:
-            char *manufacturer_name = "Manufacturer0";
+            char *manufacturer_name = USB_STRING_MANUFACTURER;
             return nimble_mbuf_write(ctxt->om, manufacturer_name, strlen(manufacturer_name));
         case BL_INDEX_CHR_MODEL_NUMBER:
-            char *model_number = "0x1234";
+            char *model_number = USB_STRING_PRODUCT;
             return nimble_mbuf_write(ctxt->om, model_number, strlen(model_number));
-        case BL_INDEX_CHR_SERIAL_NUMBER:
-            char *serial_number = "0x5678";
-            return nimble_mbuf_write(ctxt->om, serial_number, strlen(serial_number));
-        case BL_INDEX_CHR_HARDWARE_REVISION:
-            char *hardware_revision = "0x0001";
-            return nimble_mbuf_write(ctxt->om, hardware_revision, strlen(hardware_revision));
         case BL_INDEX_CHR_FIRMWARE_REVISION:
-            char *firmware_revision = "0x0010";
+            char *firmware_revision = "0x0100";
             return nimble_mbuf_write(ctxt->om, firmware_revision, strlen(firmware_revision));
         case BL_INDEX_CHR_SOFTWARE_REVISION:
             char *software_revision = "0x0100";
             return nimble_mbuf_write(ctxt->om, software_revision, strlen(software_revision));
-        // to do: think later, about system id
-        case BL_INDEX_CHR_SYSTEM_ID:
-            char *system_id = "esp32";
-            return nimble_mbuf_write(ctxt->om, system_id, strlen(system_id));
-        // to do: think later, about PnP ID
-        case BL_INDEX_CHR_PNP_ID:
-            uint8_t pnp_id[] = {0x00, 0x34, 0x12, 0x78, 0x56, 0x00, 0x01};
-            return nimble_mbuf_write(ctxt->om, pnp_id, sizeof(pnp_id));
         case BL_INDEX_CHR_REPORT_KEYBOARD_INPUT:
             if (uxQueueMessagesWaiting(bl_queue_keyboard) == 0) {
                 return 0;
@@ -57,8 +43,8 @@ int bl_gatt_access_cb(uint16_t conn_handle, uint16_t attr_handle,
 
             ESP_LOGI(BL_TAG,
                 "Sending keyboard report\n"
-                "    modifier = %d\n"
-                "    keycode = {%d, %d, %d, %d, %d, %d}",
+                "    modifier = 0x%x\n"
+                "    keycode = {0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x}",
                 report_keyboard_input.modifier,
                 report_keyboard_input.keycode[0],
                 report_keyboard_input.keycode[1],
@@ -83,8 +69,6 @@ int bl_gatt_access_cb(uint16_t conn_handle, uint16_t attr_handle,
             }
 
             ESP_LOGI(BL_TAG, "Received keyboard output report, led = %02X", report_keyboard_output);
-            return 0;
-        case BL_INDEX_CHR_REPORT_FEATURE:
             return 0;
         case BL_INDEX_CHR_REPORT_MAP:
             return nimble_mbuf_write(ctxt->om, USB_REPORT_DESCRIPTOR, sizeof(USB_REPORT_DESCRIPTOR));
@@ -138,17 +122,6 @@ int bl_gatt_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                 .report_type = BL_VALUE_RR_REPORT_TYPE_OUTPUT,
             };
             return nimble_mbuf_write(ctxt->om, &rr_report_keyboard_output, sizeof(rr_report_keyboard_output));
-        // to do: think later, confirm report id
-        case BL_INDEX_DSC_RR_REPORT_FEATURE:
-            bl_dsc_rr_t rr_report_feature = {
-                .report_id = HID_ITF_PROTOCOL_NONE,
-                .report_type = BL_VALUE_RR_REPORT_TYPE_FEATURE,
-            };
-            return nimble_mbuf_write(ctxt->om, &rr_report_feature, sizeof(rr_report_feature));
-        // to do: think later, confirm battery level characteristic
-        case BL_INDEX_DSC_ERR_REPORT_MAP:
-            uint16_t err_report_map = BL_UUID_CHR_BATTERY_LEVEL;
-            return nimble_mbuf_write(ctxt->om, &err_report_map, 2);
         default:
             return BLE_ATT_ERR_UNLIKELY;
     }
@@ -201,26 +174,6 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_MODEL_NUMBER = {
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_MODEL_NUMBER],
 };
 
-static const struct ble_gatt_chr_def BL_GATT_CHR_SERIAL_NUMBER = {
-    .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_SERIAL_NUMBER),
-    .access_cb = bl_gatt_access_cb,
-    .arg = (void *)BL_INDEX_CHR_SERIAL_NUMBER,
-    .descriptors = NULL,
-    .flags = BL_F_CHR_READ,
-    .min_key_size = 0,
-    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_SERIAL_NUMBER],
-};
-
-static const struct ble_gatt_chr_def BL_GATT_CHR_HARDWARE_REVISION = {
-    .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_HARDWARE_REVISION),
-    .access_cb = bl_gatt_access_cb,
-    .arg = (void *)BL_INDEX_CHR_HARDWARE_REVISION,
-    .descriptors = NULL,
-    .flags = BL_F_CHR_READ,
-    .min_key_size = 0,
-    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_HARDWARE_REVISION],
-};
-
 static const struct ble_gatt_chr_def BL_GATT_CHR_FIRMWARE_REVISION = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_FIRMWARE_REVISION),
     .access_cb = bl_gatt_access_cb,
@@ -239,26 +192,6 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_SOFTWARE_REVISION = {
     .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_SOFTWARE_REVISION],
-};
-
-static const struct ble_gatt_chr_def BL_GATT_CHR_SYSTEM_ID = {
-    .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_SYSTEM_ID),
-    .access_cb = bl_gatt_access_cb,
-    .arg = (void *)BL_INDEX_CHR_SYSTEM_ID,
-    .descriptors = NULL,
-    .flags = BL_F_CHR_READ,
-    .min_key_size = 0,
-    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_SYSTEM_ID],
-};
-
-static const struct ble_gatt_chr_def BL_GATT_CHR_PNP_ID = {
-    .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_PNP_ID),
-    .access_cb = bl_gatt_access_cb,
-    .arg = (void *)BL_INDEX_CHR_PNP_ID,
-    .descriptors = NULL,
-    .flags = BL_F_CHR_READ,
-    .min_key_size = 0,
-    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_PNP_ID],
 };
 
 static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_KEYBOARD_INPUT = {
@@ -324,43 +257,11 @@ static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_KEYBOARD_OUTPUT = {
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_OUTPUT],
 };
 
-static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_FEATURE = {
-    .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT),
-    .access_cb = bl_gatt_access_cb,
-    .arg = (void *)BL_INDEX_CHR_REPORT_FEATURE,
-    .descriptors = (struct ble_gatt_dsc_def[]){
-        {
-            .uuid = BLE_UUID16_DECLARE(BL_UUID_DSC_RR),
-            .att_flags = BL_F_DSC_READ,
-            .min_key_size = 0,
-            .access_cb = bl_gatt_access_cb,
-            .arg = (void *)BL_INDEX_DSC_RR_REPORT_FEATURE,
-        },
-        {
-            0,
-        },
-    },
-    .flags = BL_F_CHR_READ | BL_F_CHR_WRITE,
-    .min_key_size = 0,
-    .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_FEATURE],
-};
-
 static const struct ble_gatt_chr_def BL_GATT_CHR_REPORT_MAP = {
     .uuid = BLE_UUID16_DECLARE(BL_UUID_CHR_REPORT_MAP),
     .access_cb = bl_gatt_access_cb,
     .arg = (void *)BL_INDEX_CHR_REPORT_MAP,
-    .descriptors = (struct ble_gatt_dsc_def[]){
-        {
-            .uuid = BLE_UUID16_DECLARE(BL_UUID_DSC_ERR),
-            .att_flags = BL_F_DSC_READ,
-            .min_key_size = 0,
-            .access_cb = bl_gatt_access_cb,
-            .arg = (void *)BL_INDEX_DSC_ERR_REPORT_MAP,
-        },
-        {
-            0,
-        },
-    },
+    .descriptors = NULL,
     .flags = BL_F_CHR_READ,
     .min_key_size = 0,
     .val_handle = &bl_val_handle_list[BL_INDEX_CHR_REPORT_MAP],
@@ -398,12 +299,8 @@ static const struct ble_gatt_chr_def BL_GATT_BAS_CHARACTERISTICS[] = {
 static const struct ble_gatt_chr_def BL_GATT_DIS_CHARACTERISTICS[] = {
     BL_GATT_CHR_MANUFACTURER_NAME,
     BL_GATT_CHR_MODEL_NUMBER,
-    BL_GATT_CHR_SERIAL_NUMBER,
-    BL_GATT_CHR_HARDWARE_REVISION,
     BL_GATT_CHR_FIRMWARE_REVISION,
     BL_GATT_CHR_SOFTWARE_REVISION,
-    BL_GATT_CHR_SYSTEM_ID,
-    BL_GATT_CHR_PNP_ID,
     {0},
 };
 
@@ -411,7 +308,6 @@ static const struct ble_gatt_chr_def BL_GATT_HID_CHARACTERISTICS[] = {
     BL_GATT_CHR_REPORT_KEYBOARD_INPUT,
     BL_GATT_CHR_REPORT_MOUSE_INPUT,
     BL_GATT_CHR_REPORT_KEYBOARD_OUTPUT,
-    BL_GATT_CHR_REPORT_FEATURE,
     BL_GATT_CHR_REPORT_MAP,
     BL_GATT_CHR_HID_INFORMATION,
     BL_GATT_CHR_HID_CONTROL_POINT,

@@ -45,16 +45,11 @@ typedef enum {
     BL_INDEX_CHR_BATTERY_LEVEL = 0,
     BL_INDEX_CHR_MANUFACTURER_NAME,
     BL_INDEX_CHR_MODEL_NUMBER,
-    BL_INDEX_CHR_SERIAL_NUMBER,
-    BL_INDEX_CHR_HARDWARE_REVISION,
     BL_INDEX_CHR_FIRMWARE_REVISION,
     BL_INDEX_CHR_SOFTWARE_REVISION,
-    BL_INDEX_CHR_SYSTEM_ID,
-    BL_INDEX_CHR_PNP_ID,
     BL_INDEX_CHR_REPORT_KEYBOARD_INPUT,
     BL_INDEX_CHR_REPORT_MOUSE_INPUT,
     BL_INDEX_CHR_REPORT_KEYBOARD_OUTPUT,
-    BL_INDEX_CHR_REPORT_FEATURE,
     BL_INDEX_CHR_REPORT_MAP,
     BL_INDEX_CHR_HID_INFORMATION,
     BL_INDEX_CHR_HID_CONTROL_POINT,
@@ -64,7 +59,6 @@ typedef enum {
     BL_INDEX_DSC_RR_REPORT_MOUSE_INPUT,
     BL_INDEX_DSC_RR_REPORT_KEYBOARD_OUTPUT,
     BL_INDEX_DSC_RR_REPORT_FEATURE,
-    BL_INDEX_DSC_ERR_REPORT_MAP,
 } BL_INDEX_LIST;
 
 typedef struct {
@@ -113,18 +107,18 @@ void ble_hs_cfg_gatts_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg
 
     switch (ctxt->op) {
         case BLE_GATT_REGISTER_OP_SVC:
-            ESP_LOGI(BL_TAG, "Service %s (handle = %d) is registered",
+            ESP_LOGI(BL_TAG, "Service %s (handle = 0x%x) is registered",
                 ble_uuid_to_str(ctxt->svc.svc_def->uuid, tmp),
                 ctxt->svc.handle);
             break;
         case BLE_GATT_REGISTER_OP_CHR:
-            ESP_LOGI(BL_TAG, "Characteristic %s (def_handle = %d, val_handle = %d) is registered",
+            ESP_LOGI(BL_TAG, "Characteristic %s (def_handle = 0x%x, val_handle = 0x%x) is registered",
                 ble_uuid_to_str(ctxt->chr.chr_def->uuid, tmp),
                 ctxt->chr.def_handle,
                 ctxt->chr.val_handle);
             break;
         case BLE_GATT_REGISTER_OP_DSC:
-            ESP_LOGI(BL_TAG, "Descriptor %s (handle = %d) is registered",
+            ESP_LOGI(BL_TAG, "Descriptor %s (handle = 0x%x) is registered",
                 ble_uuid_to_str(ctxt->dsc.dsc_def->uuid, tmp),
                 ctxt->dsc.handle);
             break;
@@ -135,7 +129,7 @@ void ble_hs_cfg_gatts_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg
 }
 
 void ble_hs_cfg_reset_cb(int reason) {
-    ESP_LOGE(BL_TAG, "Resetting state, reason = %d", reason);
+    ESP_LOGE(BL_TAG, "Resetting state, reason = 0x%x", reason);
 }
 
 void ble_hs_cfg_sync_cb(void) {
@@ -143,14 +137,14 @@ void ble_hs_cfg_sync_cb(void) {
 
     int result = ble_hs_id_infer_auto(0, &bl_address_type);
     if (result != 0) {
-        ESP_LOGE(BL_TAG, "Determine address type failed, result = %d", result);
+        ESP_LOGE(BL_TAG, "Determine address type failed, result = 0x%x", result);
         return;
     }
 
     uint8_t address[6] = {0};
     result = ble_hs_id_copy_addr(bl_address_type, address, NULL);
     if (result != 0) {
-        ESP_LOGE(BL_TAG, "Get address failed, result = %d", result);
+        ESP_LOGE(BL_TAG, "Get address failed, result = 0x%x", result);
         return;
     }
 
@@ -272,7 +266,7 @@ void bl_task_transmit_data(void *param) {
 
         if (ble_gatts_notify(bl_conn_handle, bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]) != 0) {
             ESP_LOGE(BL_TAG,
-                "Notify to report characteristic (keyboard input) failed, val_handle = %d",
+                "Notify to report characteristic (keyboard input) failed, val_handle = 0x%x",
                 bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]);
             continue;
         }

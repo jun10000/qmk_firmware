@@ -44,7 +44,7 @@ void nimble_print_ble_gap_conn_desc(struct ble_gap_conn_desc *desc) {
         "   .our_ota_addr.val = " MACSTR ",\n"
         "   .peer_ota_addr.type = %d,\n"
         "   .peer_ota_addr.val = " MACSTR ",\n"
-        "   .conn_handle = %d,\n"
+        "   .conn_handle = 0x%x,\n"
         "   .conn_itvl = %d,\n"
         "   .conn_latency = %d,\n"
         "   .supervision_timeout = %d,\n"
