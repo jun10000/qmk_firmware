@@ -40,6 +40,7 @@ extern void ble_store_config_init(void);
 #define BL_VALUE_RR_REPORT_TYPE_FEATURE     0x03
 
 #define BL_LOOP_WAIT_MS                     10
+#define BL_PASSKEY                          202305
 
 typedef enum {
     BL_INDEX_CHR_BATTERY_LEVEL = 0,
@@ -171,14 +172,14 @@ esp_err_t bl_initialize_nvs_flash(void) {
     return result;
 }
 
-// to do: upgrade pairing security level
+// to do: upgrade pairing security level [check]
 void bl_initialize_ble_hs_cfg(void) {
     ble_hs_cfg.gatts_register_cb = ble_hs_cfg_gatts_register_cb;
     ble_hs_cfg.gatts_register_arg = NULL;
-    ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_NO_IO;
+    ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_DISP_ONLY;
     ble_hs_cfg.sm_oob_data_flag = 0;
     ble_hs_cfg.sm_bonding = 1;
-    ble_hs_cfg.sm_mitm = 0;
+    ble_hs_cfg.sm_mitm = 1;
     ble_hs_cfg.sm_sc = 0;
     ble_hs_cfg.sm_keypress = 0;
     ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
