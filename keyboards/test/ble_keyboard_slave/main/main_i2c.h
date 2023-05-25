@@ -54,7 +54,7 @@ void i2c_task_receive_data(void *param) {
                 .key_pressed = data[i + 3],
             };
 
-            if (xQueueSend(queue_input, &qdata, 0) != pdTRUE) {
+            if (xQueueSend(queue_input_if, &qdata, 0) != pdTRUE) {
                 ESP_LOGE(I2C_TAG, "Send data to the queue failed");
             }
 

@@ -61,12 +61,12 @@ void usb_task_transmit_data(void *param) {
     queue_data_t data;
 
     while (true) {
-        if (!tud_mounted() || uxQueueMessagesWaiting(queue_input) == 0) {
+        if (!tud_mounted() || uxQueueMessagesWaiting(queue_input_if) == 0) {
             vTaskDelay(pdMS_TO_TICKS(USB_LOOP_WAIT_MS));
             continue;
         }
 
-        if (xQueueReceive(queue_input, &data, 0) != pdTRUE) {
+        if (xQueueReceive(queue_input_if, &data, 0) != pdTRUE) {
             ESP_LOGE(USB_TAG, "Receive data from the queue failed");
             continue;
         }

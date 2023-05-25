@@ -14,7 +14,7 @@ int bl_gap_event_connect(int status, uint16_t conn_handle) {
     ESP_LOGI(BL_TAG, "Connection established");
     nimble_print_ble_gap_conn_desc(&desc);
     
-    xQueueReset(queue_input);
+    xQueueReset(queue_input_if);
     xQueueReset(bl_queue_keyboard);
     memset(&bl_report_keyboard, 0, sizeof(bl_report_keyboard));
     bl_is_connected = true;
@@ -28,7 +28,7 @@ int bl_gap_event_disconnect(int reason, struct ble_gap_conn_desc *conn) {
     ESP_LOGI(BL_TAG, "Disconnected, reason = 0x%x", reason);
     nimble_print_ble_gap_conn_desc(conn);
 
-    xQueueReset(queue_input);
+    xQueueReset(queue_input_if);
     xQueueReset(bl_queue_keyboard);
     memset(&bl_report_keyboard, 0, sizeof(bl_report_keyboard));
     bl_is_connected = false;
@@ -203,7 +203,6 @@ int ble_gap_event_cb(struct ble_gap_event *event, void *arg) {
     return 0;
 }
 
-// to do: think timing of advertising (security risk)
 void bl_gap_start_advertising(void) {
     ble_uuid16_t uuids[] = {
         BLE_UUID16_INIT(BL_UUID_SERVICE_HID),

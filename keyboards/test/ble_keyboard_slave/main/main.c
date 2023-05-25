@@ -31,6 +31,7 @@
 #define TASK_STACK_SIZE         4096
 #define TASK_PRIORITY_INPUT     17
 #define TASK_PRIORITY_OUTPUT    16
+#define TASK_PRIORITY_UTILITY   15
 #define QUEUE_LENGTH            10
 #define MAIN_WAIT_TICK          100
 
@@ -42,7 +43,8 @@ typedef struct {
 
 static const char *TAG = "ble-keyboard";
 
-static QueueHandle_t queue_input;
+static QueueHandle_t queue_input_if;
+static QueueHandle_t queue_input_bl_adv;
 
 
 
@@ -53,6 +55,7 @@ static QueueHandle_t queue_input;
 #elif IFM_INPUT_USE == IFM_INPUT_UART
     #include "main_uart.h"
 #endif
+#include "main_gpio.h"
 #include "main_usb.h"
 #if IFM_OUTPUT_USE == IFM_OUTPUT_BL
     #include "main_bl.h"
@@ -67,14 +70,16 @@ void app_main(void)
 // Initialize variables
 //--------------------------------------------------
 
-    queue_input = xQueueCreate(QUEUE_LENGTH, sizeof(queue_data_t));
-    ESP_ERROR_CHECK(queue_input == 0);
+    queue_input_if = xQueueCreate(QUEUE_LENGTH, sizeof(queue_data_t));
+    queue_input_bl_adv = xQueueCreate(QUEUE_LENGTH, 0);
+    ESP_ERROR_CHECK(queue_input_if == 0 || queue_input_bl_adv == 0);
     ESP_LOGI(TAG, "Initialize variables finished");
 
 //--------------------------------------------------
 // Initialize input interface
 //--------------------------------------------------
 
+    gpio_start();
 #if IFM_INPUT_USE == IFM_INPUT_I2C
     i2c_start();
 #elif IFM_INPUT_USE == IFM_INPUT_SPI
@@ -114,11 +119,12 @@ void app_main(void)
 // Create output task
 //--------------------------------------------------
 
-    TaskHandle_t task_output;
+    TaskHandle_t task_output, task_utility;
 #if IFM_OUTPUT_USE == IFM_OUTPUT_USB
     xTaskCreate(usb_task_transmit_data, "usb_task_transmit_data", TASK_STACK_SIZE, NULL, TASK_PRIORITY_OUTPUT, &task_output);
 #elif IFM_OUTPUT_USE == IFM_OUTPUT_BL
     xTaskCreate(bl_task_transmit_data, "bl_task_transmit_data", TASK_STACK_SIZE, NULL, TASK_PRIORITY_OUTPUT, &task_output);
+    xTaskCreate(bl_task_toggle_advertising, "bl_task_toggle_advertising", TASK_STACK_SIZE, NULL, TASK_PRIORITY_UTILITY, &task_utility);
 #endif
     ESP_ERROR_CHECK(task_output == NULL);
     ESP_LOGI(TAG, "Output task created");

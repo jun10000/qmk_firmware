@@ -58,7 +58,6 @@ typedef enum {
     BL_INDEX_DSC_RR_REPORT_KEYBOARD_INPUT,
     BL_INDEX_DSC_RR_REPORT_MOUSE_INPUT,
     BL_INDEX_DSC_RR_REPORT_KEYBOARD_OUTPUT,
-    BL_INDEX_DSC_RR_REPORT_FEATURE,
 } BL_INDEX_LIST;
 
 typedef struct {
@@ -172,6 +171,7 @@ esp_err_t bl_initialize_nvs_flash(void) {
     return result;
 }
 
+// to do: upgrade pairing security level
 void bl_initialize_ble_hs_cfg(void) {
     ble_hs_cfg.gatts_register_cb = ble_hs_cfg_gatts_register_cb;
     ble_hs_cfg.gatts_register_arg = NULL;
@@ -242,13 +242,13 @@ void bl_start(void) {
 
 void bl_task_transmit_data(void *param) {
     while (true) {
-        if (!bl_is_connected || bl_is_suspended || uxQueueMessagesWaiting(queue_input) == 0) {
+        if (!bl_is_connected || bl_is_suspended || uxQueueMessagesWaiting(queue_input_if) == 0) {
             vTaskDelay(pdMS_TO_TICKS(BL_LOOP_WAIT_MS));
             continue;
         }
 
         queue_data_t data;
-        if (xQueueReceive(queue_input, &data, 0) != pdTRUE) {
+        if (xQueueReceive(queue_input_if, &data, 0) != pdTRUE) {
             ESP_LOGE(BL_TAG, "Receive data from the queue failed");
             continue;
         }
@@ -269,6 +269,30 @@ void bl_task_transmit_data(void *param) {
                 "Notify to report characteristic (keyboard input) failed, val_handle = 0x%x",
                 bl_val_handle_list[BL_INDEX_CHR_REPORT_KEYBOARD_INPUT]);
             continue;
+        }
+    }
+}
+
+void bl_task_toggle_advertising(void *param) {
+    xQueueReset(queue_input_bl_adv);
+    while (true) {
+        if (uxQueueMessagesWaiting(queue_input_bl_adv) == 0) {
+            vTaskDelay(pdMS_TO_TICKS(BL_LOOP_WAIT_MS));
+            continue;
+        }
+
+        if (xQueueReceive(queue_input_bl_adv, NULL, 0) != pdTRUE) {
+            ESP_LOGE(BL_TAG, "Receive data from the queue failed");
+            continue;
+        }
+
+        if (ble_gap_adv_active() == 1) {
+            if (ble_gap_adv_stop() != 0) {
+                ESP_LOGE(BL_TAG, "Stop advertising failed");
+                continue;
+            }
+        } else {
+            bl_gap_start_advertising();
         }
     }
 }

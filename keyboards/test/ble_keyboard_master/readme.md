@@ -38,6 +38,10 @@ Please connect BOOT0 to VDD, and PB2 (BOOT1) to GND.
 PC2 - Button (KC_1) - GND  
 PC3 - Button (KC_2) - GND
 
+### Wire connection - Common esp32-s3
+
+8 - Button (BLE Advertise) - GND
+
 ### Wire connection - I2C
 
 |  Pin|  stm32f411|  esp32-s3|

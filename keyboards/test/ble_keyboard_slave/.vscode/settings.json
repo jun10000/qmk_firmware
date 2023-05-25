@@ -42,6 +42,7 @@
         "nimble_port_freertos.h": "c",
         "ble_store_config_priv.h": "c",
         "main_bl_gatt.h": "c",
-        "spi_slave.h": "c"
+        "spi_slave.h": "c",
+        "led_strip.h": "c"
     }
 }
