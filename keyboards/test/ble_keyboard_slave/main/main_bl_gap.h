@@ -74,7 +74,6 @@ int bl_gap_event_enc_change(int status, uint16_t conn_handle) {
     return 0;
 }
 
-// to do: add action [check]
 int bl_gap_event_passkey_action(struct ble_gap_passkey_params *params, uint16_t conn_handle) {
     ESP_LOGI(BL_TAG, "Passkey action started");
 
@@ -90,10 +89,10 @@ int bl_gap_event_passkey_action(struct ble_gap_passkey_params *params, uint16_t 
                 .action = params->action,
                 .passkey = BL_PASSKEY,
             };
-            ESP_LOGI(BL_TAG, "Passkey: %d", disp_key.passkey);
+            ESP_LOGI(BL_TAG, "Passkey: %ld", disp_key.passkey);
             int disp_result = ble_sm_inject_io(conn_handle, &disp_key);
             if (disp_result != 0) {
-                ESP_LOGE("Passkey action failed, result = 0x%x", disp_result);
+                ESP_LOGE(BL_TAG, "Passkey action failed, result = 0x%x", disp_result);
             }
             break;
         // case BLE_SM_IOACT_NUMCMP:

@@ -172,7 +172,6 @@ esp_err_t bl_initialize_nvs_flash(void) {
     return result;
 }
 
-// to do: upgrade pairing security level [check]
 void bl_initialize_ble_hs_cfg(void) {
     ble_hs_cfg.gatts_register_cb = ble_hs_cfg_gatts_register_cb;
     ble_hs_cfg.gatts_register_arg = NULL;
