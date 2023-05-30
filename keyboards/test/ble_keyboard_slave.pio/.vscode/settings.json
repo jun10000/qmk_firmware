@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "i2c.h": "c",
+        "cstddef": "c",
+        "string_view": "c",
+        "array": "c",
+        "string": "c",
+        "spi_common.h": "c",
+        "spi_slave.h": "c",
+        "stdio.h": "c"
+    }
+}
