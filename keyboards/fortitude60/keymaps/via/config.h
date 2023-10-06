@@ -2,7 +2,8 @@
 Copyright 2017 Danny Nguyen <danny@hexwire.com>
 Copyright 2021 Salicylic_Acid
 Copyright 2021 3araht
-Copyright 2022 jun10000
+Copyright 2022 monksoffunk
+Copyright 2022-2023 jun10000
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -35,3 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #define TAP_CODE_DELAY 10
+
+#undef DEBOUNCE
+#define DEBOUNCE 100
