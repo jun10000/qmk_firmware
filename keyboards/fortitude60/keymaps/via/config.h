@@ -38,4 +38,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define TAP_CODE_DELAY 10
 
 #undef DEBOUNCE
-#define DEBOUNCE 100
+#define DEBOUNCE 10
