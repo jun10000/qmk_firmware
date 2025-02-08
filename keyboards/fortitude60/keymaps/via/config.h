@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define USB_MAX_POWER_CONSUMPTION 100
 #endif
 
-#define TAP_CODE_DELAY 10
+#define TAP_CODE_DELAY 15
 
 #undef DEBOUNCE
-#define DEBOUNCE 10
+#define DEBOUNCE 15
