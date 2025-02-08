@@ -18,7 +18,8 @@
     "levels": 9
   },
   "rgblight": {
-    "led_count": 18
+    "led_count": 18,
+    "sleep": true
   },
   "ws2812": {
     "pin": "B5"
@@ -29,14 +30,21 @@
       "pin": "D2"
     }
   },
+  "debounce": 20,
   "processor": "atmega32u4",
   "bootloader": "caterina",
+  "build": {
+    "debounce_type": "sym_eager_pk",
+    "lto": true
+  },
   "features": {
     "bootmagic": false,
     "mousekey": true,
-    "extrakey": true
+    "extrakey": true,
+    "rgblight": true
   },
   "qmk": {
+    "tap_keycode_delay": 20,
     "locking": {
       "enabled": true,
       "resync": true

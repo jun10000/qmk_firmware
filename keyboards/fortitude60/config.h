@@ -1,5 +1,9 @@
 /*
-Copyright 2017 Danny Nguyen <danny@keeb.io>
+Copyright 2017 Danny Nguyen <danny@hexwire.com>
+Copyright 2021 Salicylic_Acid
+Copyright 2021 3araht
+Copyright 2022 monksoffunk
+Copyright 2025 jun10000
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,23 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-//#define EE_HANDS
-
 #define SPLIT_USB_DETECT
 #define SPLIT_USB_TIMEOUT 500
 
-/*
- * Feature disable options
- *  These options are also useful to firmware size reduction.
- */
+// Same with keyboard.json > rgblight.led_count
+#define RGBLED_COUNT 18
 
-/* disable debug print */
-// #define NO_DEBUG
-
-/* disable print */
-// #define NO_PRINT
-
-/* disable action features */
-//#define NO_ACTION_LAYER
-//#define NO_ACTION_TAPPING
-//#define NO_ACTION_ONESHOT
+// If enabled, can't modify color settings with the via.
+#define RGBLIGHT_LAYERS

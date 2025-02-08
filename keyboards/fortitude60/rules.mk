@@ -1,1 +1,1 @@
-DEFAULT_FOLDER = fortitude60/rev1
+VIA_ENABLE = yes
